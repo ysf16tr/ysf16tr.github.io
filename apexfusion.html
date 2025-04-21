@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apex Fusion v1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'rpg-bg': '#1a1a1a',
+                        'rpg-card': '#2c2c2c',
+                        'rpg-accent': '#ff4500',
+                        'rpg-accent-hover': '#e03e00',
+                        'rpg-text': '#f0f0f0',
+                        'rpg-subtext': '#a0a0a0',
+                        'rpg-border': '#444444',
+                        'rpg-progress-bg': '#444444',
+                        'rpg-physical': 'rgba(255, 69, 0, 0.7)',
+                        'rpg-mental': 'rgba(0, 206, 209, 0.7)',
+                        'rpg-streak': '#ffd700',
+                        'rpg-modal-bg': 'rgba(0, 0, 0, 0.7)',
+                    },
+                    fontFamily: {
+                      sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        body {
+            @apply bg-rpg-bg text-rpg-text font-sans;
+        }
+        .task-checkbox:checked + label {
+            @apply line-through text-rpg-subtext;
+        }
+        .stat-bar-container {
+            @apply mb-4;
+        }
+        #chartContainer {
+             @apply relative h-64 md:h-96;
+        }
+        .modal {
+            @apply fixed inset-0 bg-rpg-modal-bg flex items-center justify-center p-4 z-50 transition-opacity duration-300 ease-in-out;
+        }
+        .modal-content {
+            @apply bg-rpg-card rounded-lg shadow-xl p-6 max-w-sm w-full border border-rpg-border;
+        }
+        .tooltip {
+            @apply relative cursor-pointer;
+        }
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            @apply absolute bg-gray-900 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10;
+        }
+        .form-input, .form-select {
+             @apply w-full px-3 py-2 bg-gray-700 border border-rpg-border rounded-md text-rpg-text focus:outline-none focus:ring-1 focus:ring-rpg-accent focus:border-rpg-accent text-sm;
+        }
+        .form-label {
+            @apply block text-sm font-medium text-rpg-subtext mb-1;
+        }
+        .btn {
+            @apply py-2 px-4 rounded-lg font-semibold transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-opacity-50 shadow;
+        }
+        .btn-primary {
+            @apply bg-rpg-accent text-white hover:bg-rpg-accent-hover focus:ring-rpg-accent;
+        }
+         .btn-secondary {
+            @apply bg-gray-600 text-rpg-text hover:bg-gray-500 focus:ring-gray-400;
+        }
+        .btn-danger {
+            @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-rpg-card py-4 px-6 text-center shadow-lg">
+        <h1 class="text-3xl font-bold text-rpg-accent tracking-wider">Apex Fusion v1</h1>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-6 lg:p-8 max-w-6xl">
+
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <article class="bg-rpg-card rounded-xl p-5 shadow-md border border-rpg-border">
+                <h3 class="text-xl font-semibold mb-4 text-rpg-accent border-b border-rpg-border pb-2">Fiziksel Rutin</h3>
+                <div id="physicalTasks" class="space-y-3">
+                    <p class="text-rpg-subtext text-sm italic">Yükleniyor...</p>
+                </div>
+            </article>
+            <article class="bg-rpg-card rounded-xl p-5 shadow-md border border-rpg-border">
+                <h3 class="text-xl font-semibold mb-4 text-rpg-accent border-b border-rpg-border pb-2">Zihinsel Rutin</h3>
+                 <div id="mentalTasks" class="space-y-3">
+                     <p class="text-rpg-subtext text-sm italic">Yükleniyor...</p>
+                 </div>
+            </article>
+        </section>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <div class="bg-rpg-card rounded-xl p-5 shadow-md text-center border border-rpg-border">
+                <h3 class="text-lg font-semibold mb-2 text-rpg-subtext">Görev Tamamlandı</h3>
+                <p id="doneCount" class="text-3xl font-bold text-rpg-accent">0 / 0</p>
+            </div>
+            <div class="bg-rpg-card rounded-xl p-5 shadow-md text-center border border-rpg-border">
+                <h3 class="text-lg font-semibold mb-2 text-rpg-subtext">Seviye</h3>
+                <p id="level" class="text-3xl font-bold text-rpg-accent">1</p>
+            </div>
+             <div class="bg-rpg-card rounded-xl p-5 shadow-md text-center border border-rpg-border">
+                <h3 class="text-lg font-semibold mb-2 text-rpg-subtext">Toplam XP</h3>
+                <p id="xpCount" class="text-3xl font-bold text-rpg-accent">0</p>
+                 <div class="w-full bg-rpg-progress-bg rounded-full h-2.5 mt-2">
+                    <div id="xpBar" class="bg-rpg-accent h-2.5 rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                </div>
+                <p id="xpNextLevel" class="text-xs text-rpg-subtext mt-1">Sonraki seviye için: 100 XP</p>
+            </div>
+             <div class="bg-rpg-card rounded-xl p-5 shadow-md text-center border border-rpg-border">
+                <h3 class="text-lg font-semibold mb-2 text-rpg-subtext">Günlük Seri</h3>
+                 <p id="streakCount" class="text-3xl font-bold text-rpg-streak">
+                    <i class="fas fa-fire"></i> 0
+                </p>
+                 <p class="text-xs text-rpg-subtext mt-1">Gün</p>
+            </div>
+            <div class="bg-rpg-card rounded-xl p-5 shadow-md text-center border border-rpg-border">
+                <h3 class="text-lg font-semibold mb-2 text-rpg-subtext">Rozetler</h3>
+                <div class="flex justify-center items-center space-x-2 min-h-[40px]" id="badges">
+                    <span class="text-rpg-subtext text-sm">Henüz rozet yok</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-rpg-card rounded-xl p-5 shadow-md mb-8 border border-rpg-border">
+            <h3 class="text-xl font-semibold mb-4 text-rpg-accent border-b border-rpg-border pb-2">Yetenekler (Bu Ay)</h3>
+             <div id="statBars" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
+                 <p class="text-rpg-subtext text-sm italic">Yükleniyor...</p>
+            </div>
+        </section>
+
+        <section class="bg-rpg-card rounded-xl p-5 shadow-md mb-8 border border-rpg-border">
+            <h3 class="text-xl font-semibold mb-4 text-rpg-accent border-b border-rpg-border pb-2">Aylık İstatistikler</h3>
+            <div id="chartContainer" class="mb-6">
+                <canvas id="activityChart"></canvas>
+            </div>
+            <div class="overflow-x-auto">
+                 <table class="w-full min-w-[400px] text-sm text-left text-rpg-subtext">
+                    <thead class="text-xs text-rpg-text uppercase bg-gray-700">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 rounded-tl-lg">Tarih</th>
+                            <th scope="col" class="px-6 py-3">Fiziksel</th>
+                            <th scope="col" class="px-6 py-3 rounded-tr-lg">Zihinsel</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log" class="[&>*:nth-child(odd)]:bg-rpg-card [&>*:nth-child(even)]:bg-gray-700">
+                        <tr class="border-b border-rpg-border">
+                            <td colspan="3" class="px-6 py-4 text-center">Henüz kayıt yok.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="bg-rpg-card rounded-xl p-5 shadow-md border border-rpg-border mb-8">
+             <h3 class="text-xl font-semibold mb-4 text-rpg-accent border-b border-rpg-border pb-2">Yeni Görev Ekle</h3>
+             <form id="addTaskForm" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                 <div>
+                     <label for="taskName" class="form-label">Görev Adı</label>
+                     <input type="text" id="taskName" name="taskName" class="form-input" required placeholder="Örn: Kitap Oku">
+                 </div>
+                 <div>
+                     <label for="taskXp" class="form-label">XP Değeri</label>
+                     <input type="number" id="taskXp" name="taskXp" class="form-input" required min="1" placeholder="Örn: 15">
+                 </div>
+                 <div>
+                     <label for="taskStat" class="form-label">Yetenek</label>
+                     <select id="taskStat" name="taskStat" class="form-select" required>
+                         <option value="">Seçiniz...</option>
+                     </select>
+                 </div>
+                 <div>
+                     <label for="taskType" class="form-label">Tür</label>
+                     <select id="taskType" name="taskType" class="form-select" required>
+                         <option value="">Seçiniz...</option>
+                         <option value="fiziksel">Fiziksel</option>
+                         <option value="zihinsel">Zihinsel</option>
+                     </select>
+                 </div>
+                 <button type="submit" class="btn btn-primary h-10 md:mt-0 mt-4">
+                     <i class="fas fa-plus mr-1"></i> Ekle
+                 </button>
+             </form>
+        </section>
+
+        <section class="text-center">
+            <button id="resetButton" class="btn btn-danger">
+                <i class="fas fa-trash-alt mr-1"></i> Tüm Verileri Sıfırla
+            </button>
+        </section>
+
+    </main>
+
+    <div id="confirmationModal" class="modal opacity-0 pointer-events-none" aria-labelledby="modal-title" role="role" aria-modal="true">
+        <div class="modal-content transform scale-95 transition-transform duration-300 ease-out">
+            <h3 class="text-lg font-semibold text-rpg-accent mb-4" id="modal-title">Emin misiniz?</h3>
+            <p class="text-sm text-rpg-subtext mb-6" id="modal-message">Bu işlem geri alınamaz. Tüm ilerlemeniz ve görevleriniz kalıcı olarak silinecektir.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="modalCancelButton" class="btn btn-secondary">İptal</button>
+                <button id="modalConfirmButton" class="btn btn-danger">Evet, Sıfırla</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // --- Sabitler ve Ayarlar ---
+        const LOCAL_STORAGE_KEYS = {
+            xp: 'rpg_xp_v4', // Sürüm güncellendi
+            history: 'rpg_history_v4',
+            tasks: 'rpg_tasks_v4',
+            stats: 'rpg_stats_v4',
+            customTasks: 'rpg_customTasks_v4',
+            lastCompletionDate: 'rpg_lastCompletionDate_v4',
+            streak: 'rpg_streak_v4',
+            lastStatResetMonth: 'rpg_lastStatResetMonth_v4' // Aylık sıfırlama takibi için yeni anahtar
+        };
+
+        // Bir aylık hedeflere uygun yeni seviye eşikleri
+        const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5000, 7500, 10000, 13000];
+
+        // Bir aylık hedeflere uygun yeni rozetler, XP eşikleri ve Rütbeler
+        const BADGES = [
+            { xp: 500, icon: '🥈', name: 'Yol Haritası Çizer', rank: 'Başlangıç' }, // Seviye 2 için
+            { xp: 1500, icon: '🥇', name: 'Zihin Kalesinin Mimarı', rank: 'Yükseliş' }, // Seviye 3 için
+            { xp: 3000, icon: '💎', name: 'Potansiyel Geliştirici', rank: 'Ustalık' }, // Seviye 4 için
+            { xp: 5000, icon: '🏆', name: 'Strateji Ustası Adayı', rank: 'Kahramanlık' }, // Seviye 5 için
+            { xp: 7500, icon: '🌟', name: 'İçsel Usta', rank: 'Efsanevi' }, // Seviye 6 için
+            { xp: 13000, icon: '✨', name: 'Gerçeklik Simyacısı', rank: 'Gerçeklik' }, // Seviye 8 için
+        ];
+
+        // Güncellenmiş Başlangıç Yetenekleri (Statlar)
+        const INITIAL_STATS = {
+            Strateji: 0,
+            Bilgi: 0,
+            Yaratıcılık: 0,
+            Farkındalık: 0,
+            Beceri: 0,
+            Hareket: 0,
+            Sağlık: 0,
+            Beden: 0
+        };
+
+        // MAX_STAT_VALUE artık dinamik olarak hesaplanacak, bu sabit kaldırıldı.
+        // const MAX_STAT_VALUE = 30;
+
+        // Sadeleştirilmiş ve güncellenmiş görev listesi
+        const DEFAULT_TASKS = [
+            // Zihinsel Gelişim
+            // Strateji
+            { id: 'z1', name: 'Sudoku Çöz (Orta/Zor)', xp: 20, stat: 'Strateji', type: 'zihinsel' },
+            { id: 'z2', name: 'Satranç Bulmacası Çöz', xp: 20, stat: 'Strateji', type: 'zihinsel' }, // Günlük en az 1 adet
+            { id: 'z3', name: 'Strateji Analizi Yap', xp: 35, stat: 'Strateji', type: 'zihinsel' }, // Oyun, senaryo veya günlük plan stratejisi analizi
+
+            // Bilgi
+            { id: 'z5', name: 'Bilgilendirici İçerik Tüket (15 dk)', xp: 15, stat: 'Bilgi', type: 'zihinsel' }, // Podcast/Belgesel/Eğitim Vd.
+            { id: 'z7', name: 'Kısa Araştırma Yap', xp: 20, stat: 'Bilgi', type: 'zihinsel' }, // Genel kültür veya bilgi teyidi
+
+            // Yaratıcılık
+            { id: 'z9', name: 'Objenin Yaratıcı Kullanım Alanlarını Düşün (En az 3)', xp: 20, stat: 'Yaratıcılık', type: 'zihinsel' },
+            { id: 'z10', name: 'İki Alakasız Kavramı Birleştirip Fikir Üret', xp: 25, stat: 'Yaratıcılık', type: 'zihinsel' },
+
+            // Farkındalık
+            { id: 'z12', name: 'Günlük Olay/Duygu Yansıtma Yaz', xp: 15, stat: 'Farkındalık', type: 'zihinsel' }, // En az 2 cümle
+            { id: 'z13', name: 'Yaptığın Bir Hatayı Analiz Et', xp: 20, stat: 'Farkındalık', type: 'zihinsel' }, // Ve bundan ders çıkar
+
+            // Beceri
+            { id: 'z14', name: 'Yeni Küçük Pratik Beceri Öğren/Pratik Yap (15-20 dk)', xp: 30, stat: 'Beceri', type: 'zihinsel' },
+            { id: 'z16', name: 'El Becerisi Gerektiren Bir Şey Yap', xp: 20, stat: 'Beceri', type: 'zihinsel' }, // Origami, basit çizim vb.
+
+            // Fiziksel Gelişim
+            // Hareket
+            { id: 'f3', name: 'Günlük Egzersiz Yap (20-30 dk)', xp: 25, stat: 'Hareket', type: 'fiziksel' }, // Vücut ağırlığı, kardiyo veya sabah koşusu dahil
+
+            // Sağlık
+            { id: 'f4', name: 'Yeterli Su Miktarını İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' }, // Günlük hedef
+            { id: 'f11', name: 'Günlük Cilt Bakımı Yap', xp: 10, stat: 'Sağlık', type: 'fiziksel' }, // Yeni görev eklendi
+
+            // Beden
+            { id: 'f8', name: 'Nefese Odaklan (5 dk)', xp: 10, stat: 'Beden', type: 'fiziksel' }, // Nefes egzersizi
+        ];
+
+
+        // --- DOM Elementleri ---
+        const elements = {
+            physicalTasksContainer: document.getElementById('physicalTasks'),
+            mentalTasksContainer: document.getElementById('mentalTasks'),
+            addTaskForm: document.getElementById('addTaskForm'),
+            taskStatSelect: document.getElementById('taskStat'),
+            doneCount: document.getElementById('doneCount'),
+            level: document.getElementById('level'),
+            xpCount: document.getElementById('xpCount'),
+            xpBar: document.getElementById('xpBar'),
+            xpNextLevel: document.getElementById('xpNextLevel'),
+            streakCount: document.getElementById('streakCount'),
+            badges: document.getElementById('badges'),
+            statBars: document.getElementById('statBars'),
+            logTbody: document.getElementById('log'),
+            chartCanvas: document.getElementById('activityChart'),
+            resetButton: document.getElementById('resetButton'),
+            confirmationModal: document.getElementById('confirmationModal'),
+            modalCancelButton: document.getElementById('modalCancelButton'),
+            modalConfirmButton: document.getElementById('modalConfirmButton'),
+        };
+
+        // --- Uygulama Durumu (State) ---
+        let state = {
+            xp: 0,
+            history: {},
+            tasks: {}, // Tamamlanan görevlerin ID'lerini tutar
+            stats: { ...INITIAL_STATS }, // Bu aydaki yetenek ilerlemesini tutar
+            customTasks: [], // Kullanıcı tarafından eklenen görevler
+            lastCompletionDate: null, // Seri takibi için son tamamlama tarihi (ISO formatında)
+            streak: 0, // Günlük seri sayısı
+            lastStatResetMonth: null // Son stat sıfırlama ayını tutar (YYYY-MM formatında)
+        };
+
+        // --- Chart.js Kurulumu ---
+        let activityChart;
+        function initializeChart() {
+             if (activityChart) activityChart.destroy(); // Eğer grafik zaten varsa yok et
+             const ctx = elements.chartCanvas.getContext('2d');
+             activityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [], // Tarihler burada olacak
+                    datasets: [
+                        {
+                            label: 'Fiziksel Görev',
+                            data: [], // Fiziksel görev sayıları
+                            backgroundColor: tailwind.config.theme.extend.colors['rpg-physical'],
+                            borderColor: tailwind.config.theme.extend.colors['rpg-accent'],
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        },
+                        {
+                            label: 'Zihinsel Görev',
+                            data: [], // Zihinsel görev sayıları
+                            backgroundColor: tailwind.config.theme.extend.colors['rpg-mental'],
+                            borderColor: 'rgba(0, 206, 209, 1)', // Zihinsel için belirgin bir renk
+                            borderWidth: 1,
+                            borderRadius: 5,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Konteyner boyutuna uyum sağlar
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            // stepSize: 1 kaldırıldı, çünkü artık yüzde gösteriliyor
+                            ticks: {
+                                color: tailwind.config.theme.extend.colors['rpg-subtext'],
+                                // Y ekseninde yüzde işaretini göster
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: { color: tailwind.config.theme.extend.colors['rpg-border'] }
+                        },
+                        x: {
+                            ticks: { color: tailwind.config.theme.extend.colors['rpg-subtext'] },
+                            grid: { display: false } // X ekseni grid çizgilerini gizle
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top', // Legend üstte
+                            labels: {
+                                color: tailwind.config.theme.extend.colors['rpg-text'],
+                                boxWidth: 12,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: tailwind.config.theme.extend.colors['rpg-card'],
+                            titleColor: tailwind.config.theme.extend.colors['rpg-accent'],
+                            bodyColor: tailwind.config.theme.extend.colors['rpg-text'],
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    if (context.parsed.y !== null) label += context.parsed.y + '%'; // Görev sayısı yerine yüzde göster
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+             });
+        }
+
+        // --- Yardımcı Fonksiyonlar ---
+        const todayKey = () => new Date().toLocaleDateString('tr-TR'); // DD.MM.YYYY formatında
+        const todayIsoDate = () => new Date().toISOString().split('T')[0]; // YYYY-MM-DD formatında
+
+        // Mevcut ayı YYYY-MM formatında alır
+        const getCurrentMonthKey = () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, +1 ekle ve 2 haneli yap
+            return `${year}-${month}`;
+        };
+
+        // Bir stat için varsayılan görev sayısını hesaplar
+        function getTaskCountForStat(statKey) {
+            const allTasks = getAllTasks();
+            return allTasks.filter(task => task.stat === statKey).length;
+        }
+
+        // Bir görev türü (fiziksel/zihinsel) için toplam görev sayısını hesaplar
+        function getTotalTasksByType(type) {
+             const allTasks = getAllTasks();
+             return allTasks.filter(task => task.type === type).length;
+        }
+
+
+        function loadState() {
+            state.xp = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.xp) || '0', 10);
+            state.history = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.history) || '{}');
+            state.tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.tasks) || '{}');
+            const savedStats = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.stats) || '{}');
+            // Kayıtlı statları varsayılanlarla birleştir (artık başlangıç 0)
+            state.stats = { ...INITIAL_STATS, ...savedStats };
+            state.customTasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.customTasks) || '[]');
+            state.lastCompletionDate = localStorage.getItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
+            state.streak = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.streak) || '0', 10);
+            state.lastStatResetMonth = localStorage.getItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
+
+            // Aylık Stat Sıfırlama Kontrolü
+            const currentMonthKey = getCurrentMonthKey();
+            if (state.lastStatResetMonth !== currentMonthKey) {
+                console.log(`Yeni ay (${currentMonthKey}) algılandı. Yetenekler sıfırlanıyor.`);
+                state.stats = { ...INITIAL_STATS }; // Yetenekleri başlangıç değerlerine (0) sıfırla
+                state.lastStatResetMonth = currentMonthKey; // Son sıfırlama ayını güncelle
+                // Sıfırlanmış durumu hemen kaydet
+                saveState();
+                // Kullanıcıya bilgi ver (isteğe bağlı)
+                 showNotification("Yeni Ay Başlangıcı!", "Bu ayki yetenek puanlarınız sıfırlandı.");
+            }
+
+
+             // Seri kontrolü (öncekiyle aynı)
+             if (state.lastCompletionDate) {
+                const lastDate = new Date(state.lastCompletionDate);
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                lastDate.setHours(0,0,0,0);
+                yesterday.setHours(0,0,0,0);
+                if (lastDate < yesterday) {
+                    state.streak = 0;
+                    state.lastCompletionDate = null;
+                    saveState(); // Sıfırlanmış seriyi kaydet
+                }
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(LOCAL_STORAGE_KEYS.xp, state.xp.toString());
+            localStorage.setItem(LOCAL_STORAGE_KEYS.history, JSON.stringify(state.history));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.tasks, JSON.stringify(state.tasks));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.stats, JSON.stringify(state.stats));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.customTasks, JSON.stringify(state.customTasks));
+            if (state.lastCompletionDate) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.lastCompletionDate, state.lastCompletionDate);
+            } else {
+                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
+            }
+            localStorage.setItem(LOCAL_STORAGE_KEYS.streak, state.streak.toString());
+            // Son sıfırlama ayını kaydet
+            if (state.lastStatResetMonth) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.lastStatResetMonth, state.lastStatResetMonth);
+            } else {
+                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
+            }
+        }
+
+        function calculateLevelInfo() {
+            let currentLevel = 1;
+            let xpForNextLevel = LEVEL_THRESHOLDS[1];
+            let xpProgressInLevel = state.xp;
+
+            for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+                if (state.xp >= LEVEL_THRESHOLDS[i]) {
+                    currentLevel = i + 1;
+                    xpForNextLevel = (i + 1 < LEVEL_THRESHOLDS.length) ? LEVEL_THRESHOLDS[i + 1] : Infinity;
+                    const xpRequiredForCurrentLevel = LEVEL_THRESHOLDS[i];
+                    xpProgressInLevel = state.xp - xpRequiredForCurrentLevel;
+                    break;
+                }
+            }
+
+            const totalXpNeededForNext = xpForNextLevel - (currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel-1] : 0);
+            const progressPercentage = (xpForNextLevel === Infinity) ? 100 : Math.min(100, (xpProgressInLevel / totalXpNeededForNext) * 100);
+
+            return {
+                level: currentLevel,
+                xpForNext: xpForNextLevel,
+                progress: xpProgressInLevel,
+                neededForNext: xpForNextLevel === Infinity ? 0 : xpForNextLevel - state.xp,
+                percentage: progressPercentage
+            };
+        }
+
+        function getAllTasks() {
+            return [...DEFAULT_TASKS, ...state.customTasks];
+        }
+
+        // --- Render Fonksiyonları ---
+
+        function renderTasks() {
+             elements.physicalTasksContainer.innerHTML = '';
+             elements.mentalTasksContainer.innerHTML = '';
+             const allTasks = getAllTasks();
+
+             if (allTasks.length === 0) {
+                 elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz fiziksel görev yok.</p>';
+                 elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz zihinsel görev yok.</p>';
+                 return;
+             }
+
+             allTasks.forEach(task => {
+                 const taskElement = document.createElement('div');
+                 taskElement.className = 'task flex items-center p-3 rounded-lg transition duration-200 ease-in-out hover:bg-gray-700';
+                 taskElement.dataset.xp = task.xp;
+                 taskElement.dataset.stat = task.stat;
+                 taskElement.dataset.type = task.type;
+                 taskElement.dataset.id = task.id;
+
+                 const isChecked = state.tasks[task.id] || false;
+                 const labelClass = isChecked ? 'flex-1 cursor-pointer text-rpg-text line-through text-rpg-subtext' : 'flex-1 cursor-pointer text-rpg-text';
+
+                 // Stat bilgisini sadece kısaltma olarak göster
+                 const statDisplay = task.stat ? task.stat.substring(0,3) + '.' : '';
+
+                 taskElement.innerHTML = `
+                     <input type="checkbox" id="${task.id}" class="task-checkbox form-checkbox h-5 w-5 text-rpg-accent bg-gray-600 border-gray-500 rounded focus:ring-rpg-accent mr-3 cursor-pointer" ${isChecked ? 'checked' : ''}>
+                     <label for="${task.id}" class="${labelClass}">${task.name}</label>
+                     <span class="text-xs text-rpg-subtext ml-2">(+${task.xp} XP, +1 ${statDisplay})</span>
+                     ${state.customTasks.find(ct => ct.id === task.id) ? '<button class="delete-task-btn text-red-500 hover:text-red-400 text-xs ml-2 p-1" title="Görevi Sil"><i class="fas fa-times"></i></button>' : ''}
+                 `;
+
+                 const checkbox = taskElement.querySelector('.task-checkbox');
+                 checkbox.addEventListener('change', handleTaskChange);
+
+                 const deleteButton = taskElement.querySelector('.delete-task-btn');
+                 if (deleteButton) {
+                     deleteButton.addEventListener('click', () => handleDeleteTask(task.id));
+                 }
+
+                 if (task.type === 'fiziksel') {
+                     elements.physicalTasksContainer.appendChild(taskElement);
+                 } else if (task.type === 'zihinsel') {
+                     elements.mentalTasksContainer.appendChild(taskElement);
+                 }
+             });
+
+             if (elements.physicalTasksContainer.children.length === 0) {
+                 elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz fiziksel görev yok.</p>';
+             }
+             if (elements.mentalTasksContainer.children.length === 0) {
+                 elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz zihinsel görev yok.</p>';
+             }
+        }
+
+
+        function renderSummary() {
+            const allTasks = getAllTasks();
+            const totalTasks = allTasks.length;
+            // state.tasks objesindeki true değerleri sayarak tamamlanan görev sayısını bul
+            const completedTasks = Object.values(state.tasks).filter(Boolean).length;
+            elements.doneCount.textContent = `${completedTasks} / ${totalTasks}`;
+
+            const levelInfo = calculateLevelInfo();
+            elements.level.textContent = levelInfo.level;
+            elements.xpCount.textContent = state.xp;
+            elements.xpBar.style.width = `${levelInfo.percentage}%`;
+            elements.xpNextLevel.textContent = levelInfo.xpForNext === Infinity ? "Maksimum Seviye!" : `Sonraki seviye için: ${levelInfo.neededForNext} XP`;
+
+            elements.streakCount.innerHTML = `<i class="fas fa-fire ${state.streak > 0 ? 'text-rpg-streak' : 'text-rpg-subtext'}"></i> ${state.streak}`;
+        }
+
+        function renderBadges() {
+            elements.badges.innerHTML = '';
+            let earnedBadges = 0;
+            BADGES.forEach(badge => {
+                if (state.xp >= badge.xp) {
+                    const badgeSpan = document.createElement('span');
+                    badgeSpan.className = 'text-3xl tooltip';
+                    badgeSpan.textContent = badge.icon;
+                    // Rozet tooltip'ine rütbe/lakap bilgisini ekle
+                    badgeSpan.dataset.tooltip = `${badge.rank}: ${badge.name} (${badge.xp} XP)`;
+                    elements.badges.appendChild(badgeSpan);
+                    earnedBadges++;
+                }
+            });
+            if (earnedBadges === 0) {
+                elements.badges.innerHTML = '<span class="text-rpg-subtext text-sm">Henüz rozet yok</span>';
+            }
+        }
+
+        function renderStats() {
+            elements.statBars.innerHTML = '';
+            const allTasks = getAllTasks(); // Tüm görevleri al
+
+            // Stat başına görev sayısını hesapla
+            const taskCountPerStat = {};
+            for (const statKey in INITIAL_STATS) {
+                taskCountPerStat[statKey] = allTasks.filter(task => task.stat === statKey).length;
+            }
+
+            // Yetenekleri alfabetik sıraya göre sıralayalım
+            const sortedStats = Object.entries(state.stats).sort((a, b) => a[0].localeCompare(b[0]));
+
+            for (const [key, value] of sortedStats) {
+                const numberOfTasks = taskCountPerStat[key] || 0; // Bu stat için görev sayısı
+                const monthlyMaxCompletions = numberOfTasks * 30; // Aylık maksimum tamamlama sayısı (30 gün üzerinden)
+
+                // Yüzde hesaplaması aylık maksimum tamamlama sayısına göre yapılır
+                // monthlyMaxCompletions 0 ise (o statta görev yoksa) yüzde 0 olur
+                const percentage = monthlyMaxCompletions > 0 ? (value / monthlyMaxCompletions) * 100 : 0;
+
+                const statDiv = document.createElement('div');
+                statDiv.className = 'stat-bar-container';
+                statDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-sm font-medium text-rpg-subtext">${key}</span>
+                        <span class="text-sm font-medium text-rpg-text">${percentage.toFixed(1)}%</span> </div>
+                    <div class="w-full bg-rpg-progress-bg rounded-full h-2.5">
+                        <div class="bg-rpg-accent h-2.5 rounded-full transition-all duration-500 ease-out" style="width: ${percentage}%"></div>
+                    </div>
+                `;
+                elements.statBars.appendChild(statDiv);
+            }
+        }
+
+        function renderHistory() {
+             elements.logTbody.innerHTML = '';
+             const historyEntries = Object.entries(state.history);
+             // Tarihe göre azalan sıralama
+             historyEntries.sort(([, a], [, b]) => new Date(b.date || 0) - new Date(a.date || 0));
+
+             const chartLabels = [];
+             const chartDataPhysical = [];
+             const chartDataMental = [];
+
+             // Toplam fiziksel ve zihinsel görev sayısını hesapla (yüzde için payda)
+             const totalPhysicalTasks = getTotalTasksByType('fiziksel');
+             const totalMentalTasks = getTotalTasksByType('zihinsel');
+
+
+             if (historyEntries.length === 0) {
+                 elements.logTbody.innerHTML = `<tr class="border-b border-rpg-border"><td colspan="3" class="px-6 py-4 text-center text-rpg-subtext">Henüz kayıt yok.</td></tr>`;
+             }
+             else {
+                 // Son 30 günü grafikte göstermek için
+                 const thirtyDaysAgo = new Date();
+                 thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                 thirtyDaysAgo.setHours(0,0,0,0);
+
+                 historyEntries.forEach(([dateStr, data]) => {
+                     // Tarih formatını (DD.MM.YYYY) Date objesine çevir
+                     const dateParts = dateStr.split('.');
+                     // Dikkat: Ay 0-11 arasıdır, bu yüzden dateParts[1] - 1 yapıyoruz
+                     const entryDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
+                     entryDate.setHours(0,0,0,0); // Saat bilgisini sıfırla
+
+                     const row = document.createElement('tr');
+                     row.className = 'border-b border-rpg-border';
+                     row.innerHTML = `
+                         <td class="px-6 py-4 font-medium text-rpg-text whitespace-nowrap">${dateStr}</td>
+                         <td class="px-6 py-4">${data.fiziksel || 0}</td>
+                         <td class="px-6 py-4">${data.zihinsel || 0}</td>
+                     `;
+                     elements.logTbody.appendChild(row);
+
+                     // Son 30 gün içindeyse grafiğe ekle
+                     if (entryDate >= thirtyDaysAgo) {
+                         chartLabels.push(dateStr);
+                         // Fiziksel ve zihinsel görev sayılarını yüzdeye çevir
+                         const physicalPercentage = totalPhysicalTasks > 0 ? (data.fiziksel / totalPhysicalTasks) * 100 : 0;
+                         const mentalPercentage = totalMentalTasks > 0 ? (data.zihinsel / totalMentalTasks) * 100 : 0;
+
+                         chartDataPhysical.push(parseFloat(physicalPercentage.toFixed(1))); // Sayı olarak sakla, 1 ondalık basamak
+                         chartDataMental.push(parseFloat(mentalPercentage.toFixed(1))); // Sayı olarak sakla, 1 ondalık basamak
+                     }
+                 });
+
+                 // Grafiği güncellemeden önce verileri tarihe göre sırala (eskiden yeniye)
+                 chartLabels.reverse();
+                 chartDataPhysical.reverse();
+                 chartDataMental.reverse();
+
+                 activityChart.data.labels = chartLabels;
+                 activityChart.data.datasets[0].data = chartDataPhysical;
+                 activityChart.data.datasets[1].data = chartDataMental;
+                 activityChart.update();
+             }
+        }
+
+
+        function renderAll() {
+            renderTasks();
+            renderSummary();
+            renderBadges();
+            renderStats();
+            renderHistory();
+        }
+
+        // --- Olay Dinleyicileri ve Handler Fonksiyonları ---
+
+        function handleTaskChange(event) {
+            const checkbox = event.target;
+            const taskElement = checkbox.closest('.task');
+            const taskId = checkbox.id;
+            const taskData = getAllTasks().find(t => t.id === taskId);
+
+            if (!taskData) {
+                console.error("Görev verisi bulunamadı:", taskId);
+                return;
+            }
+
+            const xpValue = taskData.xp;
+            const statKey = taskData.stat;
+            const isChecked = checkbox.checked;
+
+            // Görev durumunu güncelle
+            state.tasks[taskId] = isChecked;
+
+            // XP ve Stat değişikliğini hesapla
+            const xpChange = isChecked ? xpValue : -xpValue;
+            // Stat artışı her tamamlamada 1 birim olarak ayarlandı
+            const statChange = isChecked ? 1 : -1;
+
+            // Seviye atlama kontrolü için önceki seviyeyi al
+            const previousLevel = calculateLevelInfo().level;
+
+            // XP'yi güncelle (negatife düşmemesini sağla)
+            state.xp += xpChange;
+            if (state.xp < 0) state.xp = 0;
+
+            // Stat'ı güncelle (negatife düşmemesini sağla)
+            if (state.stats[statKey] !== undefined) {
+                state.stats[statKey] += statChange;
+                if (state.stats[statKey] < 0) state.stats[statKey] = 0;
+                // MAX_STAT_VALUE kaldırıldığı için burada max kontrolü yapmaya gerek yok,
+                // yüzde hesaplaması renderStats'ta dinamik olarak yapılacak.
+                // if (state.stats[statKey] > MAX_STAT_VALUE) {
+                //      state.stats[statKey] = MAX_STAT_VALUE;
+                // }
+            }
+
+            // Günlük tamamlama geçmişini güncelle (Görev sayısı bazında)
+            const today = todayKey(); // DD.MM.YYYY formatında
+            const todayISO = todayIsoDate(); // YYYY-MM-DD formatında
+
+            if (!state.history[today]) {
+                // Yeni gün kaydı oluştur
+                state.history[today] = {
+                    xp: 0, // Bu günlük toplam XP değil, sadece o günkü kayıt için tutuluyor olabilir veya kaldırılabilir
+                    fiziksel: 0,
+                    zihinsel: 0,
+                    date: new Date().toISOString() // ISO formatında tarih kaydı
+                };
+            }
+
+            // Günlük fiziksel ve zihinsel görev sayılarını yeniden hesapla
+            // Basit sayaç güncelleme yaklaşımı:
+            if (isChecked) { // Tamamlandıysa
+                if (taskData.type === 'fiziksel') state.history[today].fiziksel++;
+                else if (taskData.type === 'zihinsel') state.history[today].zihinsel++;
+            } else { // İptal edildiyse
+                state.history[today].fiziksel = Math.max(0, state.history[today].fiziksel - (taskData.type === 'fiziksel' ? 1 : 0));
+                state.history[today].zihinsel = Math.max(0, state.history[today].zihinsel - (taskData.type === 'zihinsel' ? 1 : 0));
+            }
+
+
+            // Seri sayacını güncelle
+            if (isChecked) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                const yesterdayISO = yesterday.toISOString().split('T')[0];
+
+                // Eğer dün veya bugün zaten bir görev tamamlandıysa seriyi artır veya aynı tut
+                if (state.lastCompletionDate === todayISO) {
+                    // Zaten bugün tamamlanmış bir görev var, seri aynı kalır
+                } else if (state.lastCompletionDate === yesterdayISO) {
+                    // Dün tamamlanmış, bugün ilk görev tamamlandı, seri artar
+                    state.streak++;
+                    state.lastCompletionDate = todayISO;
+                } else {
+                    // Uzun bir aradan sonra veya ilk kez görev tamamlandı, seri 1 başlar
+                    state.streak = 1;
+                    state.lastCompletionDate = todayISO;
+                }
+            }
+            // Not: Görev iptal edildiğinde seri bozulmaz, sadece yeni bir görev tamamlanmadığında bozulur.
+            // Seri bozulma kontrolü loadState içinde yapılıyor (dün veya bugün görev tamamlanmadıysa).
+
+
+            // Durumu kaydet
+            saveState();
+
+            // UI'ı yeniden render et
+            renderAll();
+
+            // Bildirim göster
+            const currentLevel = calculateLevelInfo().level;
+            if (currentLevel > previousLevel) {
+                showNotification(`Tebrikler! Seviye ${currentLevel}'e ulaştın! 🎉`);
+            } else {
+                const statDisplay = taskData.stat ? taskData.stat.substring(0,3) + '.' : '';
+                showNotification(`Görev ${isChecked ? 'tamamlandı' : 'iptal edildi'}: ${taskData.name}`, `${xpChange > 0 ? '+' : ''}${xpChange} XP${statKey ? ', ' + (isChecked ? '+' : '-') + '1 ' + statDisplay : ''}`);
+            }
+        }
+
+
+        function handleAddTask(event) {
+            event.preventDefault();
+            const form = event.target;
+            const name = form.taskName.value.trim();
+            const xp = parseInt(form.taskXp.value, 10);
+            const stat = form.taskStat.value;
+            const type = form.taskType.value;
+
+            if (!name || isNaN(xp) || xp <= 0 || !stat || !type) {
+                alert("Lütfen tüm alanları doğru şekilde doldurun.");
+                return;
+            }
+
+            // Yeni göreve benzersiz bir ID ata
+            const newTask = { id: `custom_${Date.now()}`, name: name, xp: xp, stat: stat, type: type };
+
+            // Yeni görevi customTasks listesine ekle
+            state.customTasks.push(newTask);
+
+            // Durumu kaydet
+            saveState();
+
+            // UI'ı yeniden render et
+            renderAll();
+
+            // Formu sıfırla
+            form.reset();
+
+            // Bildirim göster
+            const statDisplay = stat ? stat.substring(0,3) + '.' : '';
+            showNotification("Yeni Görev Eklendi!", `${name} (+${xp} XP, +1 ${statDisplay})`);
+        }
+
+        function handleDeleteTask(taskId) {
+             // Silme işlemi için onay modalını göster
+             showConfirmationModal(
+                 "Görevi Sil",
+                 `"${state.customTasks.find(t => t.id === taskId)?.name}" görevini silmek istediğinizden emin misiniz?`,
+                 () => {
+                     // Onaylandıysa görevi sil
+                     state.customTasks = state.customTasks.filter(task => task.id !== taskId);
+                     // Tamamlanmış görevler listesinden de kaldır
+                     delete state.tasks[taskId];
+                     // Durumu kaydet
+                     saveState();
+                     // UI'ı yeniden render et
+                     renderAll();
+                     // Bildirim göster
+                     showNotification("Görev Silindi.");
+                 }
+             );
+        }
+
+        function handleResetRequest() {
+             // Sıfırlama işlemi için onay modalını göster
+             showConfirmationModal(
+                 "Tüm Verileri Sıfırla",
+                 "Emin misin? Tüm ilerlemen ve görevlerin silinecek! Bu işlem geri alınamaz.",
+                 () => {
+                     // Onaylandıysa tüm localStorage verilerini sil
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.xp);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.history);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.tasks);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.stats);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.customTasks);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.streak);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth); // Yeni anahtarı da sil
+
+                     // Sayfayı yeniden yükle (uygulama sıfırlanmış state ile başlar)
+                     location.reload();
+                 }
+             );
+        }
+
+        // --- Modal Fonksiyonları ---
+        let currentConfirmCallback = null;
+        function showConfirmationModal(title, message, onConfirm) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            currentConfirmCallback = onConfirm; // Onay callback fonksiyonunu sakla
+            elements.confirmationModal.classList.remove('opacity-0', 'pointer-events-none');
+            elements.confirmationModal.querySelector('.modal-content').classList.remove('scale-95');
+            elements.confirmationModal.querySelector('.modal-content').classList.add('scale-100');
+        }
+        function hideConfirmationModal() {
+            elements.confirmationModal.querySelector('.modal-content').classList.remove('scale-100');
+            elements.confirmationModal.querySelector('.modal-content').classList.add('scale-95');
+            elements.confirmationModal.classList.add('opacity-0');
+            // Animasyon bitiminden sonra pointer-events'ı kapat
+            setTimeout(() => {
+                elements.confirmationModal.classList.add('pointer-events-none');
+                currentConfirmCallback = null; // Callback'i temizle
+            }, 300);
+        }
+
+        // Bildirim gösterme fonksiyonu (Tarayıcı bildirimlerini kullanır)
+        function showNotification(title, body = '') {
+             // Tarayıcının bildirimleri destekleyip desteklemediğini kontrol et
+             if (!('Notification' in window)) {
+                 console.log("Tarayıcı bildirimleri desteklemiyor.");
+                 return;
+             }
+
+             // Eğer izin zaten verilmişse bildirimi göster
+             if (Notification.permission === 'granted') {
+                 new Notification(title, { body: body, icon: './favicon.ico' }); // İkon eklenebilir
+             }
+             // Eğer izin henüz verilmemişse veya reddedilmemişse, izin iste
+             else if (Notification.permission !== 'denied') {
+                 Notification.requestPermission().then(permission => {
+                     // Kullanıcı izni verirse bildirimi tekrar dene
+                     if (permission === 'granted') {
+                         new Notification(title, { body: body, icon: './favicon.ico' }); // İkon eklenebilir
+                     }
+                 });
+             }
+             // İzin reddedilmişse bir şey yapma
+        }
+
+
+        // Yetenek seçeneklerini forma doldurur (INITIAL_STATS'tan alır)
+        function populateStatOptions() {
+            elements.taskStatSelect.innerHTML = '<option value="">Seçiniz...</option>'; // Varsayılan seçenek
+            for (const statKey in INITIAL_STATS) {
+                const option = document.createElement('option');
+                option.value = statKey;
+                option.textContent = statKey;
+                elements.taskStatSelect.appendChild(option);
+            }
+        }
+
+
+        // --- Başlangıç ---
+        function initializeApp() {
+            // Sayfa yüklendiğinde bildirim izni iste (eğer henüz sorulmadıysa)
+            if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                 Notification.requestPermission();
+            }
+
+            loadState(); // Önce state yüklenir (ve aylık sıfırlama kontrolü yapılır)
+            initializeChart(); // Grafik başlatılır
+            populateStatOptions(); // Yeni görev ekleme formundaki yetenek seçenekleri doldurulur
+
+            // Olay Dinleyicileri Tanımlanır
+            elements.addTaskForm.addEventListener('submit', handleAddTask); // Yeni görev ekleme formu submit edildiğinde
+            elements.resetButton.addEventListener('click', handleResetRequest); // Sıfırlama butonuna tıklandığında
+            elements.modalCancelButton.addEventListener('click', hideConfirmationModal); // Modal iptal butonuna tıklandığında
+            elements.modalConfirmButton.addEventListener('click', () => { // Modal onay butonuna tıklandığında
+                if (typeof currentConfirmCallback === 'function') {
+                    currentConfirmCallback(); // Saklanan onay callback'ini çalıştır
+                }
+                hideConfirmationModal(); // Modalı kapat
+            });
+
+            renderAll(); // Tüm UI elementleri ilk kez render edilir (sıfırlanmış statlar dahil)
+
+            console.log("Süper Zinde RPG v4 Başlatıldı!"); // Uygulama başlangıç mesajı
+        }
+
+        // DOM yüklendiğinde uygulamayı başlat
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+    </script>
+
+</body>
+</html>
