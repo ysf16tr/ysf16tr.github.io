@@ -1,0 +1,306 @@
+/* sudokuJS v0.4.4 - CSS
+// https://github.com/pocketjoso/sudokuJS
+// Author: Jonas Ohlsson
+// License: MIT
+*/
+
+/* Dark theme variables */
+:root {
+    --dark-bg: #08030a; /* Daha da koyu bir arka plan */
+    --dark-surface: #180f1c; /* Daha koyu yüzey */
+    --dark-text: #f0e6f3; /* Açık, okunur metin */
+    --dark-border-light: rgba(128, 0, 128, 0.4); /* Açık mor yarı saydam kenarlık (RGBA) */
+    --dark-border-dark: rgba(148, 0, 211, 0.5); /* Daha belirgin mor yarı saydam kenarlık (RGBA) */
+    --dark-accent-red: #e53935; /* Enerjik kırmızı vurgu */
+    --dark-accent-green: #43a047; /* Yeşil vurgu */
+    --dark-accent-blue: #1e88e5; /* Mavi vurgu */
+    --dark-highlight: #ffb300; /* Vurgu rengi */
+    --dark-button-bg: #2b1f30; /* Buton arka planı */
+    --dark-button-hover: #d32f2f; /* Buton hover rengi (Koyu Kırmızı) */
+}
+
+body {
+    /* Existing styles */
+    color: var(--dark-text);
+    font-family: 'Arial', sans-serif; /* Daha yaygın bir font */
+    margin: 0; /* Ensure no default margin */
+    padding: 0; /* Ensure no default padding */
+    min-height: 100vh; /* Make sure body takes at least full viewport height */
+    display: flex; /* İçeriği ortalamak için flex kullan */
+    justify-content: center; /* Yatayda ortala */
+    align-items: center; /* Dikeyde ortala */
+    flex-direction: column; /* İçeriği dikey sırala */
+    overflow-x: hidden; /* Yatay kaydırmayı engelle */
+
+    /* Animated Gradient Background - Daha Koyu Enerjik Tema */
+    /* Koyu mor, bordo ve kırmızı tonlarda bir degrade */
+    background: linear-gradient(-45deg, #3a0a47, #561b9a, #0d436e, #880e4f);
+    background-size: 400% 400%;
+    animation: gradientAnimation 15s ease infinite;
+}
+
+@keyframes gradientAnimation {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.wrap {
+    /* Wrap sınıfı için stil ekleyerek içeriğin ortalanmasını sağla */
+    background-color: rgba(12, 5, 14, 0.85); /* Daha koyu ve yarı saydam arka plan */
+    padding: 2em;
+    border-radius: 8px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.8); /* Daha belirgin gölge */
+    z-index: 1; /* Arka planın üzerinde kalmasını sağla */
+    position: relative; /* Z-index'in çalışması için */
+    width: 95%; /* Daha iyi mobil uyumluluk */
+    max-width: 500px; /* Maksimum genişlik */
+    text-align: center; /* İçeriği ortala */
+}
+
+h1 {
+    color: var(--dark-highlight); /* Başlık rengi */
+    margin-bottom: 1em;
+    font-size: 2.5em; /* Daha büyük başlık */
+    text-shadow: 0 0 10px rgba(255, 179, 0, 0.5), 0 0 20px rgba(255, 179, 0, 0.3); /* Parlama efekti */
+    letter-spacing: 2px; /* Harf aralığı */
+    animation: pulse 2s infinite alternate; /* Hafif nabız animasyonu */
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+
+label {
+    color: var(--dark-text);
+    margin-right: 0.5em;
+}
+
+
+.sudoku-board {
+    min-height: 22.75rem;
+    margin-top: 1em; /* Üst boşluk artırıldı */
+    margin-bottom: 1em;
+    background-color: var(--dark-surface); /* Darker surface for the board */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
+    border-radius: 4px; /* Hafif yuvarlak köşeler */
+}
+    /*cell (wrapper) contains both cell input and candidates div*/
+    .sudoku-board-cell {
+        display: inline-block;
+        position: relative;
+        /* Kenarlıklar artık yarı saydam mor */
+        border: 1px solid var(--dark-border-light); /* Lighter border for cells */
+        background: var(--dark-surface); /* Match board surface */
+        max-width: 11.11111%;
+        box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+        /*rules for drawing the black lines dividing houses
+           -- specific for board size 9! need diff rules for diff board sizes
+        */
+        [data-board-size="9"].sudoku-board .sudoku-board-cell:nth-of-type(9n+1){
+            border-left-width: 2px;
+            border-left-color: var(--dark-border-dark); /* Darker border for houses */
+        }
+        [data-board-size="9"].sudoku-board .sudoku-board-cell:nth-of-type(n):nth-of-type(-n+9){
+            border-top-width: 2px;
+            border-top-color: var(--dark-border-dark); /* Darker border for houses */
+        }
+        [data-board-size="9"].sudoku-board .sudoku-board-cell:nth-of-type(3n){
+            border-right-width: 2px;
+            border-right-color: var(--dark-border-dark); /* Darker border for houses */
+        }
+        [data-board-size="9"].sudoku-board .sudoku-board-cell:nth-of-type(n+19):nth-of-type(-n+27),
+        [data-board-size="9"].sudoku-board .sudoku-board-cell:nth-of-type(n+46):nth-of-type(-n+54),
+        [data-board-size="9"].sudoku-board .sudoku-board-cell:nth-of-type(n+73):nth-of-type(-n+81){
+            border-bottom-width: 2px;
+            border-bottom-color: var(--dark-border-dark); /* Darker border for houses */
+        }
+
+        /* the input for the value of each cell (i.e. 1-9 or empty for standard sudoku*/
+        .sudoku-board-cell input {
+            background: none;
+            color: var(--dark-text); /* Lighter text color */
+			font-size: 19.2px;
+			font-size: 1.2rem;
+            text-align: center;
+			width: 2em;
+			max-width: 100%;
+			height: 2em;
+			border: 0;
+			position: relative;
+			z-index: 1; /*on top of candidates*/
+        }
+
+            /*highlight new input in board cell*/
+            .sudoku-board-cell .highlight-val {
+                color: var(--dark-accent-blue); /* Use accent color for highlights */
+                font-weight: bold; /* Make highlighted values stand out */
+            }
+            /*highligt incorrect input*/
+            .sudoku-board-cell .board-cell--error {
+                background-color: var(--dark-accent-red); /* Use error color for incorrect input */
+                color: var(--dark-text); /* Keep text light */
+            }
+
+        /*wrapper that hold the candidates for each cell*/
+        .sudoku-board-cell .candidates {
+            display: none; /*hidden by default*/
+            position: absolute;
+            top: 0; bottom: 0; left: 0; right: 0;
+            text-align: center;
+            font-size: .6em; /* Adjust font size for candidates */
+            letter-spacing: 0; /* Reset letter spacing */
+            font-family: sans-serif; /* Use modern font */
+            color: var(--dark-text); /* Lighter text color for candidates */
+            padding: 2px; /* Add some padding */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+
+            /*use as justify grid*/
+            line-height: 1.2; /* Adjust line height */
+            text-align: left; /* Align candidates to the left */
+            grid-template-columns: repeat(3, 1fr); /* 3 columns for candidates 1-9 */
+            gap: 1px; /* Small gap between candidates */
+        }
+            .sudoku-board .candidates:after {
+               content: none; /* Remove the old justify hack */
+            }
+        /* when board cells start to get narrower because of small screen,
+            reduce letter spacing for candidates to make them still fit*/
+        @media(max-width: 23em){
+            .sudoku-board .candidates {
+                font-size: .5em; /* Further reduce font size on small screens */
+                line-height: 1.1; /* Adjust line height */
+            }
+        }
+            .showCandidates .candidates {
+                display: grid; /* Show candidates as grid */
+            }
+
+            /*each candidate in each cell is wrapped in a div*/
+            .sudoku-board .candidates div {
+                display: flex; /* Use flex to center candidate numbers */
+                justify-content: center; /* Center horizontally */
+                align-items: center; /* Center vertically */
+                width: 100%; /* Each candidate div takes full grid cell width */
+                height: 100%; /* Each candidate div takes full grid cell height */
+                line-height: 1; /* Reset line height */
+                vertical-align: top;
+                *display: inline;
+                *zoom: 1;
+            }
+                /*.candidates div*/.candidate--highlight {
+                    background-color: var(--dark-highlight); /* Use highlight color */
+                    color: var(--dark-bg); /* Dark text on highlight */
+                    border-radius: 2px; /* Slightly rounded corners for highlight */
+                }
+                /*.candidates div*/.candidate--to-remove {
+                    background-color: var(--dark-accent-red); /* Use error color */
+                    color: var(--dark-text); /* Keep text light */
+                    border-radius: 2px; /* Slightly rounded corners */
+                }
+
+/* Button styles - modernized for dark theme with effects */
+.sudokubutton1,.sudokubutton2,.sudokubutton3,.sudokubutton4,
+.sudokubutton5,.sudokubutton6,.sudokubutton7 {
+    color: var(--dark-text); /* Lighter text color */
+    background-color: var(--dark-button-bg); /* Buton arka planı */
+    transition: all 0.3s ease; /* Tüm geçişler için animasyon */
+    padding: 10px 20px; /* Daha fazla padding */
+    border: none; /* Kenarlık yok */
+    border-radius: 25px; /* Daha yuvarlak köşeler */
+    cursor: pointer;
+    margin: 5px; /* Daha fazla margin */
+    font-size: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Hafif gölge */
+    outline: none; /* Odaklanıldığında dış çizgiyi kaldır */
+    position: relative; /* Efektler için */
+    overflow: hidden; /* Efektlerin buton içinde kalması için */
+}
+
+/* Specific button colors */
+.sudokubutton1 { background-color: var(--dark-accent-green); }
+.sudokubutton2 { background-color: var(--dark-accent-blue); }
+.sudokubutton3 { background-color: var(--dark-accent-red); }
+.sudokubutton4 {
+    background-color: var(--dark-surface);
+    border: 1px solid var(--dark-border-light);
+}
+.sudokubutton5,.sudokubutton6 { background-color: var(--dark-accent-blue); }
+.sudokubutton7 { background-color: var(--dark-border-dark); }
+
+
+/* Hover effects */
+.sudokubutton1:hover,.sudokubutton2:hover,.sudokubutton3:hover,.sudokubutton4:hover,
+.sudokubutton5:hover,.sudokubutton6:hover,.sudokubutton7:hover {
+    background-color: var(--dark-button-hover); /* Hover rengi (Koyu Kırmızı) */
+    color: var(--dark-highlight); /* Metin rengi değişimi */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5); /* Gölge artışı */
+    transform: translateY(-2px); /* Hafif yukarı hareket */
+}
+
+/* Active (tıklama) efekti */
+.sudokubutton1:active,.sudokubutton2:active,.sudokubutton3:active,.sudokubutton4:active,
+.sudokubutton5:active,.sudokubutton6:active,.sudokubutton7:active {
+    transform: translateY(0); /* Eski pozisyonuna dön */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Gölge azalması */
+}
+
+/* Ripple effect (isteğe bağlı, JS gerektirir) - Sadece CSS ile basit bir örnek */
+.sudokubutton1:after,.sudokubutton2:after,.sudokubutton3:after,.sudokubutton4:after,
+.sudokubutton5:after,.sudokubutton6:after,.sudokubutton7:after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.3); /* Beyaz parlama */
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%, -50%);
+    transform-origin: 50% 50%;
+}
+
+.sudokubutton1:hover:after,.sudokubutton2:hover:after,.sudokubutton3:hover:after,.sudokubutton4:hover:after,
+.sudokubutton5:hover:after,.sudokubutton6:hover:after,.sudokubutton7:hover:after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0) translate(-50%, -50%);
+        opacity: 1;
+    }
+    80% {
+        transform: scale(15, 15) translate(-50%, -50%);
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Küçük ekranlar için buton düzenlemesi */
+@media (max-width: 600px) {
+    .wrap button {
+        display: block; /* Butonları alt alta sırala */
+        width: 100%; /* Tam genişlik yap */
+        margin-bottom: 10px; /* Alt boşluk ekle */
+    }
+}
+
