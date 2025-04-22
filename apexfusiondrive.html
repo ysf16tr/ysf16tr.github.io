@@ -7,7 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
     <script>
+        // Firebase Config - Buraya kendi Firebase projenizin yapılandırma objesini yapıştırın
+          const firebaseConfig = {
+                apiKey: "AIzaSyBypJftfCA6AdJmSUEiMrl17s9md16C_RA",
+                authDomain: "apex-fusion-v1.firebaseapp.com",
+                projectId: "apex-fusion-v1",
+                storageBucket: "apex-fusion-v1.firebasestorage.app",
+                messagingSenderId: "568547733591",
+                appId: "1:568547733591:web:5b3d3637ec99dfc9007312"
+            };
+
+        // Firebase'i Başlat
+        firebase.initializeApp(firebaseConfig);
+
+        // Firebase Auth ve Firestore Referansları
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -73,56 +95,25 @@
          .btn-secondary {
             @apply bg-gray-600 text-rpg-text hover:bg-gray-500 focus:ring-gray-400;
         }
-         .btn-danger {
+        .btn-danger {
             @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
         }
-         .btn-success {
-            @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
-        }
-         .btn-info {
+         .btn-google {
             @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
         }
     </style>
-
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js"></script>
-
 </head>
 <body class="antialiased">
 
     <header class="bg-rpg-card py-4 px-6 text-center shadow-lg">
         <h1 class="text-3xl font-bold text-rpg-accent tracking-wider">Apex Fusion v1</h1>
+         <div id="auth-status" class="mt-2 text-sm text-rpg-subtext">
+             <span id="user-email">Misafir</span>
+             <button id="auth-button" class="btn btn-secondary btn-sm ml-2">Giriş Yap</button>
+         </div>
     </header>
 
     <main class="container mx-auto p-4 md:p-6 lg:p-8 max-w-6xl">
-
-        <section class="text-center mb-6">
-            <div id="g_id_onload"
-                 data-client_id="755451034699-ir2d9cjv9ngsckqd14np3citeqnmlrjs.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-size="large"
-                 data-theme="outline"
-                 data-text="sign_in_with"
-                 data-shape="rectangular"
-                 data-logo_alignment="left">
-            </div>
-             <div id="authStatus" class="mt-2 text-sm text-rpg-subtext">Google Drive bağlantısı bekleniyor...</div>
-             <button id="signOutButton" class="btn btn-secondary btn-sm mt-2 hidden">Çıkış Yap</button>
-        </section>
-
-        <section class="text-center mb-8 space-x-4">
-             <button id="saveToDriveButton" class="btn btn-success" disabled>
-                <i class="fas fa-save mr-1"></i> Drive'a Kaydet
-            </button>
-             <button id="loadFromDriveButton" class="btn btn-info" disabled>
-                <i class="fas fa-download mr-1"></i> Drive'dan Yükle
-            </button>
-        </section>
-
 
         <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <article class="bg-rpg-card rounded-xl p-5 shadow-md border border-rpg-border">
@@ -251,16 +242,6 @@
         </div>
     </div>
 
-    <div id="messageModal" class="modal opacity-0 pointer-events-none" aria-labelledby="message-modal-title" role="role" aria-modal="true">
-        <div class="modal-content transform scale-95 transition-transform duration-300 ease-out">
-            <h3 class="text-lg font-semibold text-rpg-accent mb-4" id="message-modal-title">Bilgi</h3>
-            <p class="text-sm text-rpg-subtext mb-6" id="message-modal-message"></p>
-            <div class="flex justify-end">
-                <button id="messageModalCloseButton" class="btn btn-secondary">Tamam</button>
-            </div>
-        </div>
-    </div>
-
 
     <script>
         const LOCAL_STORAGE_KEYS = {
@@ -273,10 +254,6 @@
             streak: 'rpg_streak_v4',
             lastStatResetMonth: 'rpg_lastStatResetMonth_v4'
         };
-
-        const DRIVE_FILE_NAME = 'apex_fusion_save_data.json';
-        let driveFileId = null;
-        let isGoogleDriveConnected = false;
 
         const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5000, 7500, 10000, 13000];
 
@@ -304,27 +281,19 @@
             { id: 'z1', name: 'Sudoku Çöz (Orta/Zor)', xp: 20, stat: 'Strateji', type: 'zihinsel' },
             { id: 'z2', name: 'Satranç Bulmacası Çöz', xp: 20, stat: 'Strateji', type: 'zihinsel' },
             { id: 'z3', name: 'Strateji Analizi Yap', xp: 35, stat: 'Strateji', type: 'zihinsel' },
-
             { id: 'z5', name: 'Bilgilendirici İçerik Tüket (15 dk)', xp: 15, stat: 'Bilgi', type: 'zihinsel' },
             { id: 'z7', name: 'Kısa Araştırma Yap', xp: 20, stat: 'Bilgi', type: 'zihinsel' },
-
             { id: 'z9', name: 'Objenin Yaratıcı Kullanım Alanlarını Düşün (En az 3)', xp: 20, stat: 'Yaratıcılık', type: 'zihinsel' },
             { id: 'z10', name: 'İki Alakasız Kavramı Birleştirip Fikir Üret', xp: 25, stat: 'Yaratıcılık', type: 'zihinsel' },
-
             { id: 'z12', name: 'Günlük Olay/Duygu Yansıtma Yaz', xp: 15, stat: 'Farkındalık', type: 'zihinsel' },
             { id: 'z13', name: 'Yaptığın Bir Hatayı Analiz Et', xp: 20, stat: 'Farkındalık', type: 'zihinsel' },
-
             { id: 'z14', name: 'Yeni Küçük Pratik Beceri Öğren/Pratik Yap (15-20 dk)', xp: 30, stat: 'Beceri', type: 'zihinsel' },
-            { id: 'z16', name: 'El Becerisi Gerektiren Bir Ş şey Yap', xp: 20, stat: 'Beceri', type: 'zihinsel' },
-
+            { id: 'z16', name: 'El Becerisi Gerektiren Bir Şey Yap', xp: 20, stat: 'Beceri', type: 'zihinsel' },
             { id: 'f3', name: 'Günlük Egzersiz Yap (20-30 dk)', xp: 25, stat: 'Hareket', type: 'fiziksel' },
-
             { id: 'f4', name: 'Yeterli Su Miktarını İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' },
             { id: 'f11', name: 'Günlük Cilt Bakımı Yap', xp: 10, stat: 'Sağlık', type: 'fiziksel' },
-
             { id: 'f8', name: 'Nefese Odaklan (5 dk)', xp: 10, stat: 'Beden', type: 'fiziksel' },
         ];
-
 
         const elements = {
             physicalTasksContainer: document.getElementById('physicalTasks'),
@@ -345,14 +314,9 @@
             confirmationModal: document.getElementById('confirmationModal'),
             modalCancelButton: document.getElementById('modalCancelButton'),
             modalConfirmButton: document.getElementById('modalConfirmButton'),
-            messageModal: document.getElementById('messageModal'),
-            messageModalTitle: document.getElementById('message-modal-title'),
-            messageModalMessage: document.getElementById('message-modal-message'),
-            messageModalCloseButton: document.getElementById('messageModalCloseButton'),
-            authStatus: document.getElementById('authStatus'),
-            signOutButton: document.getElementById('signOutButton'),
-            saveToDriveButton: document.getElementById('saveToDriveButton'),
-            loadFromDriveButton: document.getElementById('loadFromDriveButton'),
+            authStatus: document.getElementById('auth-status'),
+            userEmail: document.getElementById('user-email'),
+            authButton: document.getElementById('auth-button')
         };
 
         let state = {
@@ -365,292 +329,6 @@
             streak: 0,
             lastStatResetMonth: null
         };
-
-        let googleUser;
-
-        function handleCredentialResponse(response) {
-            const idToken = response.credential;
-            console.log("Google Sign-In Başarılı.");
-            elements.authStatus.textContent = "Google Drive'a bağlanılıyor...";
-            elements.signOutButton.classList.remove('hidden');
-
-            gapi.load('client', initializeGapiClient);
-        }
-
-        async function initializeGapiClient() {
-             try {
-                 console.log("gapi.client.init başlatılıyor...");
-                 await gapi.client.init({
-                    clientId: '755451034699-ir2d9cjv9ngsckqd14np3citeqnmlrjs.apps.googleusercontent.com',
-                    scope: 'https://www.googleapis.com/auth/drive.appdata'
-                 });
-                 console.log("gapi.client.init tamamlandı.");
-
-                 if (gapi.client && gapi.client.drive) {
-                      console.log("Google Drive API yüklendi ve erişilebilir.");
-                      isGoogleDriveConnected = true;
-                      elements.authStatus.textContent = "Google Drive'a bağlı.";
-                      elements.saveToDriveButton.disabled = false;
-                      elements.loadFromDriveButton.disabled = false;
-
-                      findOrCreateDriveFile();
-                 } else {
-                     console.error("Google Drive API yüklenemedi veya erişilebilir değil.");
-                     isGoogleDriveConnected = false;
-                     elements.authStatus.textContent = "Google Drive bağlantısı başarısız. Yerel depolama kullanılıyor.";
-                     showMessage("Uyarı", "Google Drive API yüklenemedi. Veriler yerel olarak kaydedilecek.");
-                     elements.saveToDriveButton.disabled = true;
-                     elements.loadFromDriveButton.disabled = true;
-                 }
-
-             } catch (error) {
-                 console.error("Google API istemcisi başlatılırken hata:", error);
-                 isGoogleDriveConnected = false;
-                 elements.authStatus.textContent = "Google Drive bağlantısı başarısız. Yerel depolama kullanılıyor.";
-                 if (error.result && error.result.error && error.result.error.code === 401) {
-                     showMessage("Yetkilendirme Gerekli", "Google Drive'a erişmek için yetkilendirme izni vermeniz gerekiyor. İzin verilmezse veriler yerel olarak kaydedilir.");
-                 } else {
-                     showMessage("Hata", "Google API başlatılırken bir sorun oluştu. Veriler yerel olarak kaydedilecek.");
-                 }
-                 elements.saveToDriveButton.disabled = true;
-                 elements.loadFromDriveButton.disabled = true;
-             }
-        }
-
-        function handleSignOut() {
-            google.accounts.id.disableAutoSelect();
-
-            console.log('Oturum kapatıldı (GIS).');
-            elements.authStatus.textContent = "Google Drive bağlantısı kesildi. Yerel depolama kullanılıyor.";
-            elements.signOutButton.classList.add('hidden');
-            elements.saveToDriveButton.disabled = true;
-            elements.loadFromDriveButton.disabled = true;
-            driveFileId = null;
-            isGoogleDriveConnected = false;
-            showMessage("Bilgi", "Google hesabınızdan çıkış yapıldı. Veriler artık yerel olarak kaydediliyor.");
-        }
-
-        function gapiLoaded() {
-            console.log("Google API (gapi.js) yüklendi.");
-        }
-
-        function gisLoaded() {
-            console.log("Google Identity Services (GIS) yüklendi.");
-        }
-
-
-        async function findOrCreateDriveFile() {
-            if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive) {
-                 console.log("Drive bağlantısı yok, dosya aranmıyor/oluşturulmuyor.");
-                 return;
-            }
-            console.log("Drive dosyası aranıyor veya oluşturuluyor...");
-            try {
-                const response = await gapi.client.drive.files.list({
-                    q: `name='${DRIVE_FILE_NAME}' and 'appDataFolder' in parents`,
-                    spaces: 'appDataFolder',
-                    fields: 'files(id, name)',
-                    pageSize: 1
-                });
-
-                const files = response.result.files;
-                if (files && files.length > 0) {
-                    driveFileId = files[0].id;
-                    console.log("Drive dosyası bulundu:", driveFileId);
-                     showMessage("Bilgi", "Google Drive'da kaydedilmiş veri bulundu.");
-                } else {
-                    console.log("Drive dosyası bulunamadı, oluşturuluyor...");
-                    await createInitialDriveFile();
-                    showMessage("Bilgi", "Google Drive'da yeni bir kayıt dosyası oluşturuldu.");
-                }
-            } catch (error) {
-                console.error("Drive dosyası aranırken/oluşturulurken hata:", error);
-                isGoogleDriveConnected = false;
-                elements.authStatus.textContent = "Google Drive dosyasına erişilemedi. Yerel depolama kullanılıyor.";
-                elements.saveToDriveButton.disabled = true;
-                elements.loadFromDriveButton.disabled = true;
-                showMessage("Hata", "Google Drive dosyasına erişilemedi veya oluşturulamadı. Lütfen tekrar deneyin veya konsolu kontrol edin. Veriler yerel olarak kaydedilecek.");
-            }
-        }
-
-        async function createInitialDriveFile() {
-             if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive) {
-                 console.error("createInitialDriveFile: Drive bağlantısı yok.");
-                 throw new Error("Drive not connected");
-            }
-             console.log("Başlangıç Drive dosyası oluşturuluyor...");
-             try {
-                const fileMetadata = {
-                    'name': DRIVE_FILE_NAME,
-                    'parents': ['appDataFolder']
-                };
-                const media = {
-                    mimeType: 'application/json',
-                    body: JSON.stringify({})
-                };
-                const response = await gapi.client.drive.files.create({
-                    resource: fileMetadata,
-                    media: media,
-                    fields: 'id'
-                });
-                driveFileId = response.result.id;
-                console.log("Başlangıç Drive dosyası oluşturuldu:", driveFileId);
-            } catch (error) {
-                console.error("Başlangıç Drive dosyası oluşturulurken hata:", error);
-                isGoogleDriveConnected = false;
-                elements.authStatus.textContent = "Google Drive dosyası oluşturulamadı. Yerel depolama kullanılıyor.";
-                elements.saveToDriveButton.disabled = true;
-                elements.loadFromDriveButton.disabled = true;
-                showMessage("Hata", "Google Drive'da başlangıç dosyası oluşturulamadı. Veriler yerel olarak kaydedilecek.");
-                throw error;
-            }
-        }
-
-
-        async function saveToDrive() {
-             if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive || !driveFileId) {
-                 showMessage("Uyarı", "Google Drive bağlantısı yok veya dosya ID'si bulunamadı. Veriler yerel depolamaya kaydediliyor.");
-                 saveStateLocal();
-                 return;
-             }
-             console.log("Durum Drive'a kaydediliyor...");
-             try {
-                 const fileContent = JSON.stringify(state);
-                 const response = await gapi.client.request({
-                    path: '/upload/drive/v3/files/' + driveFileId,
-                    method: 'PATCH',
-                    params: {
-                        uploadType: 'media'
-                    },
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: fileContent
-                 });
-                 console.log("Durum Drive'a kaydedildi:", response);
-                 showMessage("Başarılı", "Veriler Google Drive'a başarıyla kaydedildi.");
-             } catch (error) {
-                 console.error("Durum Drive'a kaydedilirken hata:", error);
-                 isGoogleDriveConnected = false;
-                 elements.authStatus.textContent = "Google Drive'a kaydedilemedi. Yerel depolama kullanılıyor.";
-                 elements.saveToDriveButton.disabled = true;
-                 elements.loadFromDriveButton.disabled = true;
-                 showMessage("Hata", "Veriler Google Drive'a kaydedilemedi. Lütfen tekrar deneyin. Veriler yerel olarak kaydedilecek.");
-                 saveStateLocal();
-             }
-        }
-
-        async function loadFromDrive() {
-            if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive || !driveFileId) {
-                 showMessage("Uyarı", "Google Drive bağlantısı yok veya dosya ID'si bulunamadı. Yerel depolamadan yükleniyor.");
-                 loadStateLocal();
-                 return;
-             }
-             console.log("Durum Drive'dan yükleniyor...");
-             try {
-                 const response = await gapi.client.drive.files.get({
-                    fileId: driveFileId,
-                    alt: 'media'
-                 });
-
-                 const loadedState = response.result;
-
-                 if (loadedState && typeof loadedState === 'object') {
-                     state = { ...state, ...loadedState };
-                     saveStateLocal();
-                     renderAll();
-                     console.log("Durum Drive'dan yüklendi:", state);
-                     showMessage("Başarılı", "Veriler Google Drive'dan başarıyla yüklendi.");
-                 } else {
-                     console.error("Yüklenen veri formatı hatalı:", loadedState);
-                     showMessage("Hata", "Google Drive'dan yüklenen veri formatı geçerli değil. Yerel depolamadan yükleniyor.");
-                     loadStateLocal();
-                 }
-
-             } catch (error) {
-                 console.error("Durum Drive'dan yüklenirken hata:", error);
-                 isGoogleDriveConnected = false;
-                 elements.authStatus.textContent = "Google Drive'dan yüklenemedi. Yerel depolama kullanılıyor.";
-                 elements.saveToDriveButton.disabled = true;
-                 elements.loadFromDriveButton.disabled = true;
-                 showMessage("Hata", "Veriler Google Drive'dan yüklenemedi veya dosya boş/bozuk. Lütfen tekrar deneyin. Veriler yerel olarak kaydedilecek.");
-                 loadStateLocal();
-             }
-        }
-
-        function loadStateLocal() {
-            console.log("Yerel depolamadan durum yükleniyor...");
-            state.xp = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.xp) || '0', 10);
-            state.history = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.history) || '{}');
-            state.tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.tasks) || '{}');
-            const savedStats = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.stats) || '{}');
-            state.stats = { ...INITIAL_STATS, ...savedStats };
-            state.customTasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.customTasks) || '[]');
-            state.lastCompletionDate = localStorage.getItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
-            state.streak = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.streak) || '0', 10);
-            state.lastStatResetMonth = localStorage.getItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
-
-            const currentMonthKey = getCurrentMonthKey();
-            if (state.lastStatResetMonth !== currentMonthKey) {
-                console.log(`Yeni ay (${currentMonthKey}) algılandı. Yetenekler sıfırlanıyor.`);
-                state.stats = { ...INITIAL_STATS };
-                state.lastStatResetMonth = currentMonthKey;
-                saveStateLocal();
-                showNotification("Yeni Ay Başlangıcı!", "Bu ayki yetenek puanlarınız sıfırlandı.");
-            }
-
-             if (state.lastCompletionDate) {
-                const lastDate = new Date(state.lastCompletionDate);
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                lastDate.setHours(0,0,0,0);
-                yesterday.setHours(0,0,0,0);
-                if (lastDate < yesterday) {
-                    state.streak = 0;
-                    state.lastCompletionDate = null;
-                    saveStateLocal();
-                }
-            }
-             console.log("Yerel depolamadan durum yükleniyor.");
-        }
-
-        function saveStateLocal() {
-            console.log("Durum yerel depolamaya kaydediliyor...");
-            localStorage.setItem(LOCAL_STORAGE_KEYS.xp, state.xp.toString());
-            localStorage.setItem(LOCAL_STORAGE_KEYS.history, JSON.stringify(state.history));
-            localStorage.setItem(LOCAL_STORAGE_KEYS.tasks, JSON.stringify(state.tasks));
-            localStorage.setItem(LOCAL_STORAGE_KEYS.stats, JSON.stringify(state.stats));
-            localStorage.setItem(LOCAL_STORAGE_KEYS.customTasks, JSON.stringify(state.customTasks));
-            if (state.lastCompletionDate) {
-                localStorage.setItem(LOCAL_STORAGE_KEYS.lastCompletionDate, state.lastCompletionDate);
-            } else {
-                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
-            }
-            localStorage.setItem(LOCAL_STORAGE_KEYS.streak, state.streak.toString());
-            if (state.lastStatResetMonth) {
-                localStorage.setItem(LOCAL_STORAGE_KEYS.lastStatResetMonth, state.lastStatResetMonth);
-            } else {
-                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
-            }
-             console.log("Durum yerel depolamaya kaydedildi.");
-        }
-
-        function saveState() {
-            if (isGoogleDriveConnected && driveFileId) {
-                saveToDrive();
-            } else {
-                saveStateLocal();
-            }
-        }
-
-        async function loadState() {
-            if (isGoogleDriveConnected && driveFileId) {
-                 await loadFromDrive();
-            } else {
-                loadStateLocal();
-            }
-        }
-
 
         let activityChart;
         function initializeChart() {
@@ -745,6 +423,143 @@
              return allTasks.filter(task => task.type === type).length;
         }
 
+        async function loadState(user) {
+            const currentMonthKey = getCurrentMonthKey();
+
+            if (user) {
+                const userDocRef = db.collection('users').doc(user.uid);
+                try {
+                    const doc = await userDocRef.get();
+                    if (doc.exists) {
+                        state = doc.data();
+                        console.log("Firebase'den veri yüklendi.");
+
+                        // Firebase'den yüklenen veride stat sıfırlama ayarı yoksa veya eskiyse sıfırla
+                        if (state.lastStatResetMonth !== currentMonthKey) {
+                            console.log(`Yeni ay (${currentMonthKey}) algılandı veya Firebase verisinde ay bilgisi eksik. Yetenekler sıfırlanıyor.`);
+                            state.stats = { ...INITIAL_STATS };
+                            state.lastStatResetMonth = currentMonthKey;
+                            // Sıfırlanmış durumu hemen Firebase'e kaydet
+                            await saveState(user);
+                            showNotification("Yeni Ay Başlangıcı!", "Bu ayki yetenek puanlarınız sıfırlandı.");
+                        }
+
+                         // Seri kontrolü (Firebase verisinden sonra)
+                         if (state.lastCompletionDate) {
+                            const lastDate = new Date(state.lastCompletionDate);
+                            const yesterday = new Date();
+                            yesterday.setDate(yesterday.getDate() - 1);
+                            lastDate.setHours(0,0,0,0);
+                            yesterday.setHours(0,0,0,0);
+                            if (lastDate < yesterday) {
+                                state.streak = 0;
+                                state.lastCompletionDate = null;
+                                await saveState(user);
+                            }
+                        }
+
+                    } else {
+                        console.log("Firebase'de kullanıcı verisi bulunamadı, yeni oluşturuluyor.");
+                        // Yeni kullanıcı veya ilk kez giriş yapan kullanıcı
+                        state = {
+                            xp: 0,
+                            history: {},
+                            tasks: {},
+                            stats: { ...INITIAL_STATS },
+                            customTasks: [],
+                            lastCompletionDate: null,
+                            streak: 0,
+                            lastStatResetMonth: currentMonthKey // Yeni ay bilgisi ile başla
+                        };
+                         await saveState(user); // Başlangıç durumunu Firebase'e kaydet
+                         showNotification("Hoş Geldiniz!", "Yeni bir profil oluşturuldu.");
+                    }
+                } catch (error) {
+                    console.error("Firebase veri yükleme hatası:", error);
+                    // Hata durumunda yerel depolamaya geri dön
+                    loadStateLocal();
+                    showNotification("Hata!", "Firebase verileri yüklenemedi, yerel depolama kullanılıyor.");
+                }
+            } else {
+                // Kullanıcı giriş yapmamışsa yerel depolamadan yükle
+                loadStateLocal();
+                console.log("Yerel depolamadan veri yüklendi.");
+            }
+
+             // Yükleme tamamlandıktan sonra UI'ı render et
+            renderAll();
+        }
+
+        function loadStateLocal() {
+            state.xp = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.xp) || '0', 10);
+            state.history = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.history) || '{}');
+            state.tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.tasks) || '{}');
+            const savedStats = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.stats) || '{}');
+            state.stats = { ...INITIAL_STATS, ...savedStats };
+            state.customTasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.customTasks) || '[]');
+            state.lastCompletionDate = localStorage.getItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
+            state.streak = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.streak) || '0', 10);
+            state.lastStatResetMonth = localStorage.getItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
+
+            const currentMonthKey = getCurrentMonthKey();
+            if (state.lastStatResetMonth !== currentMonthKey) {
+                console.log(`Yeni ay (${currentMonthKey}) algılandı. Yerel yetenekler sıfırlanıyor.`);
+                state.stats = { ...INITIAL_STATS };
+                state.lastStatResetMonth = currentMonthKey;
+                saveStateLocal();
+                showNotification("Yeni Ay Başlangıcı!", "Bu ayki yerel yetenek puanlarınız sıfırlandı.");
+            }
+
+             if (state.lastCompletionDate) {
+                const lastDate = new Date(state.lastCompletionDate);
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                lastDate.setHours(0,0,0,0);
+                yesterday.setHours(0,0,0,0);
+                if (lastDate < yesterday) {
+                    state.streak = 0;
+                    state.lastCompletionDate = null;
+                    saveStateLocal();
+                }
+            }
+        }
+
+
+        async function saveState(user) {
+            if (user) {
+                const userDocRef = db.collection('users').doc(user.uid);
+                try {
+                    await userDocRef.set(state);
+                    console.log("Firebase'e veri kaydedildi.");
+                } catch (error) {
+                    console.error("Firebase veri kaydetme hatası:", error);
+                    showNotification("Hata!", "Firebase verileri kaydedilemedi.");
+                }
+            } else {
+                saveStateLocal();
+                console.log("Yerel depolamaya veri kaydedildi.");
+            }
+        }
+
+        function saveStateLocal() {
+            localStorage.setItem(LOCAL_STORAGE_KEYS.xp, state.xp.toString());
+            localStorage.setItem(LOCAL_STORAGE_KEYS.history, JSON.stringify(state.history));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.tasks, JSON.stringify(state.tasks));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.stats, JSON.stringify(state.stats));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.customTasks, JSON.stringify(state.customTasks));
+            if (state.lastCompletionDate) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.lastCompletionDate, state.lastCompletionDate);
+            } else {
+                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
+            }
+            localStorage.setItem(LOCAL_STORAGE_KEYS.streak, state.streak.toString());
+            if (state.lastStatResetMonth) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.lastStatResetMonth, state.lastStatResetMonth);
+            } else {
+                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
+            }
+        }
+
 
         function calculateLevelInfo() {
             let currentLevel = 1;
@@ -785,55 +600,50 @@
              if (allTasks.length === 0) {
                  elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz fiziksel görev yok.</p>';
                  elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz zihinsel görev yok.</p>';
-             } else {
-                 allTasks.forEach(task => {
-                     const taskElement = document.createElement('div');
-                     taskElement.className = 'task flex items-center p-3 rounded-lg transition duration-200 ease-in-out hover:bg-gray-700';
-                     taskElement.dataset.xp = task.xp;
-                     taskElement.dataset.stat = task.stat;
-                     taskElement.dataset.type = task.type;
-                     taskElement.dataset.id = task.id;
-
-                     const isChecked = state.tasks[task.id] || false;
-                     const labelClass = isChecked ? 'flex-1 cursor-pointer text-rpg-text line-through text-rpg-subtext' : 'flex-1 cursor-pointer text-rpg-text';
-
-                     const statDisplay = task.stat ? task.stat.substring(0,3) + '.' : '';
-
-                     taskElement.innerHTML = `
-                         <input type="checkbox" id="${task.id}" class="task-checkbox form-checkbox h-5 w-5 text-rpg-accent bg-gray-600 border-gray-500 rounded focus:ring-rpg-accent mr-3 cursor-pointer" ${isChecked ? 'checked' : ''}>
-                         <label for="${task.id}" class="${labelClass}">${task.name}</label>
-                         <span class="text-xs text-rpg-subtext ml-2">(+${task.xp} XP, +1 ${statDisplay})</span>
-                         ${state.customTasks.find(ct => ct.id === task.id) ? '<button class="delete-task-btn text-red-500 hover:text-red-400 text-xs ml-2 p-1" title="Görevi Sil"><i class="fas fa-times"></i></button>' : ''}
-                     `;
-
-                     const checkbox = taskElement.querySelector('.task-checkbox');
-                     checkbox.addEventListener('change', handleTaskChange);
-
-                     const deleteButton = taskElement.querySelector('.delete-task-btn');
-                     if (deleteButton) {
-                         deleteButton.addEventListener('click', () => handleDeleteTask(task.id));
-                     }
-
-                     if (task.type === 'fiziksel') {
-                         elements.physicalTasksContainer.appendChild(taskElement);
-                     } else if (task.type === 'zihinsel') {
-                         elements.mentalTasksContainer.appendChild(taskElement);
-                     }
-                 });
+                 return;
              }
 
-             if (elements.physicalTasksContainer.children.length === 0 && allTasks.filter(task => task.type === 'fiziksel').length > 0) {
-                 elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Tüm fiziksel görevler tamamlandı!</p>';
-             } else if (elements.physicalTasksContainer.children.length === 0) {
-                  elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz fiziksel görev yok.</p>';
-             }
+             allTasks.forEach(task => {
+                 const taskElement = document.createElement('div');
+                 taskElement.className = 'task flex items-center p-3 rounded-lg transition duration-200 ease-in-out hover:bg-gray-700';
+                 taskElement.dataset.xp = task.xp;
+                 taskElement.dataset.stat = task.stat;
+                 taskElement.dataset.type = task.type;
+                 taskElement.dataset.id = task.id;
 
-             if (elements.mentalTasksContainer.children.length === 0 && allTasks.filter(task => task.type === 'zihinsel').length > 0) {
-                  elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Tüm zihinsel görevler tamamlandı!</p>';
-             } else if (elements.mentalTasksContainer.children.length === 0) {
-                  elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz zihinsel görev yok.</p>';
-             }
+                 const isChecked = state.tasks[task.id] || false;
+                 const labelClass = isChecked ? 'flex-1 cursor-pointer text-rpg-text line-through text-rpg-subtext' : 'flex-1 cursor-pointer text-rpg-text';
 
+                 const statDisplay = task.stat ? task.stat.substring(0,3) + '.' : '';
+
+                 taskElement.innerHTML = `
+                     <input type="checkbox" id="${task.id}" class="task-checkbox form-checkbox h-5 w-5 text-rpg-accent bg-gray-600 border-gray-500 rounded focus:ring-rpg-accent mr-3 cursor-pointer" ${isChecked ? 'checked' : ''}>
+                     <label for="${task.id}" class="${labelClass}">${task.name}</label>
+                     <span class="text-xs text-rpg-subtext ml-2">(+${task.xp} XP, +1 ${statDisplay})</span>
+                     ${state.customTasks.find(ct => ct.id === task.id) ? '<button class="delete-task-btn text-red-500 hover:text-red-400 text-xs ml-2 p-1" title="Görevi Sil"><i class="fas fa-times"></i></button>' : ''}
+                 `;
+
+                 const checkbox = taskElement.querySelector('.task-checkbox');
+                 checkbox.addEventListener('change', handleTaskChange);
+
+                 const deleteButton = taskElement.querySelector('.delete-task-btn');
+                 if (deleteButton) {
+                     deleteButton.addEventListener('click', () => handleDeleteTask(task.id));
+                 }
+
+                 if (task.type === 'fiziksel') {
+                     elements.physicalTasksContainer.appendChild(taskElement);
+                 } else if (task.type === 'zihinsel') {
+                     elements.mentalTasksContainer.appendChild(taskElement);
+                 }
+             });
+
+             if (elements.physicalTasksContainer.children.length === 0) {
+                 elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz fiziksel görev yok.</p>';
+             }
+             if (elements.mentalTasksContainer.children.length === 0) {
+                 elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz zihinsel görev yok.</p>';
+             }
         }
 
 
@@ -966,7 +776,7 @@
             renderHistory();
         }
 
-        function handleTaskChange(event) {
+        async function handleTaskChange(event) {
             const checkbox = event.target;
             const taskElement = checkbox.closest('.task');
             const taskId = checkbox.id;
@@ -1016,7 +826,6 @@
                 state.history[today].zihinsel = Math.max(0, state.history[today].zihinsel - (taskData.type === 'zihinsel' ? 1 : 0));
             }
 
-
             if (isChecked) {
                 const yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
@@ -1032,8 +841,7 @@
                 }
             }
 
-
-            saveState();
+            await saveState(auth.currentUser);
 
             renderAll();
 
@@ -1047,7 +855,7 @@
         }
 
 
-        function handleAddTask(event) {
+        async function handleAddTask(event) {
             event.preventDefault();
             const form = event.target;
             const name = form.taskName.value.trim();
@@ -1056,7 +864,7 @@
             const type = form.taskType.value;
 
             if (!name || isNaN(xp) || xp <= 0 || !stat || !type) {
-                showMessage("Uyarı", "Lütfen tüm alanları doğru şekilde doldurun.");
+                alert("Lütfen tüm alanları doğru şekilde doldurun.");
                 return;
             }
 
@@ -1064,7 +872,7 @@
 
             state.customTasks.push(newTask);
 
-            saveState();
+            await saveState(auth.currentUser);
 
             renderAll();
 
@@ -1074,25 +882,37 @@
             showNotification("Yeni Görev Eklendi!", `${name} (+${xp} XP, +1 ${statDisplay})`);
         }
 
-        function handleDeleteTask(taskId) {
+        async function handleDeleteTask(taskId) {
              showConfirmationModal(
                  "Görevi Sil",
                  `"${state.customTasks.find(t => t.id === taskId)?.name}" görevini silmek istediğinizden emin misiniz?`,
-                 () => {
+                 async () => {
                      state.customTasks = state.customTasks.filter(task => task.id !== taskId);
                      delete state.tasks[taskId];
-                     saveState();
+                     await saveState(auth.currentUser);
                      renderAll();
                      showNotification("Görev Silindi.");
                  }
              );
         }
 
-        function handleResetRequest() {
+        async function handleResetRequest() {
              showConfirmationModal(
                  "Tüm Verileri Sıfırla",
                  "Emin misin? Tüm ilerlemen ve görevlerin silinecek! Bu işlem geri alınamaz.",
-                 () => {
+                 async () => {
+                     // Firebase'de oturum açmışsa Firebase verisini sil
+                     if (auth.currentUser) {
+                         try {
+                             await db.collection('users').doc(auth.currentUser.uid).delete();
+                             console.log("Firebase verisi silindi.");
+                         } catch (error) {
+                             console.error("Firebase veri silme hatası:", error);
+                             showNotification("Hata!", "Firebase verileri silinemedi.");
+                         }
+                     }
+
+                     // Yerel depolamayı temizle
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.xp);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.history);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.tasks);
@@ -1126,24 +946,6 @@
             }, 300);
         }
 
-        function showMessage(title, message) {
-             elements.messageModalTitle.textContent = title;
-             elements.messageModalMessage.textContent = message;
-             elements.messageModal.classList.remove('opacity-0', 'pointer-events-none');
-             elements.messageModal.querySelector('.modal-content').classList.remove('scale-95');
-             elements.messageModal.querySelector('.modal-content').classList.add('scale-100');
-        }
-
-        function hideMessageModal() {
-             elements.messageModal.querySelector('.modal-content').classList.remove('scale-100');
-             elements.messageModal.querySelector('.modal-content').classList.add('scale-95');
-             elements.messageModal.classList.add('opacity-0');
-             setTimeout(() => {
-                 elements.messageModal.classList.add('pointer-events-none');
-             }, 300);
-        }
-
-
         function showNotification(title, body = '') {
              if (!('Notification' in window)) {
                  console.log("Tarayıcı bildirimleri desteklemiyor.");
@@ -1162,7 +964,6 @@
              }
         }
 
-
         function populateStatOptions() {
             elements.taskStatSelect.innerHTML = '<option value="">Seçiniz...</option>';
             for (const statKey in INITIAL_STATS) {
@@ -1173,13 +974,54 @@
             }
         }
 
+        // Firebase Google Giriş Fonksiyonu
+        async function signInWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                await auth.signInWithPopup(provider);
+            } catch (error) {
+                console.error("Google Giriş Hatası:", error);
+                showNotification("Giriş Hatası", error.message);
+            }
+        }
 
-        async function initializeApp() {
+        // Firebase Çıkış Fonksiyonu
+        async function signOut() {
+            try {
+                await auth.signOut();
+            } catch (error) {
+                console.error("Çıkış Hatası:", error);
+                showNotification("Çıkış Hatası", error.message);
+            }
+        }
+
+        // Firebase Auth Durum Değişikliği Dinleyicisi
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // Kullanıcı giriş yapmış
+                elements.userEmail.textContent = user.email;
+                elements.authButton.textContent = 'Çıkış Yap';
+                elements.authButton.removeEventListener('click', signInWithGoogle);
+                elements.authButton.addEventListener('click', signOut);
+                console.log("Kullanıcı giriş yaptı:", user.uid);
+                await loadState(user); // Firebase'den veriyi yükle
+            } else {
+                // Kullanıcı çıkış yapmış veya hiç giriş yapmamış
+                elements.userEmail.textContent = 'Misafir';
+                elements.authButton.textContent = 'Google ile Giriş Yap';
+                elements.authButton.removeEventListener('click', signOut);
+                elements.authButton.addEventListener('click', signInWithGoogle);
+                console.log("Kullanıcı çıkış yaptı.");
+                await loadState(null); // Yerel depolamadan veriyi yükle
+            }
+        });
+
+
+        function initializeApp() {
             if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
                  Notification.requestPermission();
             }
 
-            loadStateLocal();
             initializeChart();
             populateStatOptions();
 
@@ -1192,28 +1034,14 @@
                 }
                 hideConfirmationModal();
             });
-            elements.messageModalCloseButton.addEventListener('click', hideMessageModal);
 
-            elements.saveToDriveButton.addEventListener('click', saveToDrive);
-            elements.loadFromDriveButton.addEventListener('click', loadFromDrive);
-            elements.signOutButton.addEventListener('click', handleSignOut);
+            // Auth durumu değiştiğinde loadState ve renderAll otomatik çağrılacak
+            // İlk yüklemede onAuthStateChanged tetiklenir ve loadState'i çağırır.
 
-            renderAll();
-
-            console.log("Süper Zinde RPG v4 Başlatıldı!");
+            console.log("Apex Fusion v1 Başlatıldı!");
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
-
-        function gapiLoaded() {
-            console.log("Google API (gapi.js) yüklendi.");
-             gapi.load('client', initializeGapiClient);
-        }
-
-        function gisLoaded() {
-            console.log("Google Identity Services (GIS) yüklendi.");
-        }
-
 
     </script>
 
