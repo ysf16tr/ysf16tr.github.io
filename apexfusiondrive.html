@@ -98,7 +98,8 @@
 
         <section class="text-center mb-6">
             <div id="g_id_onload"
-                 data-client_id="755451034699-ir2d9cjv9ngsckqd14np3citeqnmlrjs.apps.googleusercontent.com" data-callback="handleCredentialResponse"
+                 data-client_id="755451034699-ir2d9cjv9ngsckqd14np3citeqnmlrjs.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse"
                  data-auto_prompt="false">
             </div>
             <div class="g_id_signin"
@@ -325,7 +326,7 @@
 
             // Beceri
             { id: 'z14', name: 'Yeni Küçük Pratik Beceri Öğren/Pratik Yap (15-20 dk)', xp: 30, stat: 'Beceri', type: 'zihinsel' },
-            { id: 'z16', name: 'El Becerisi Gerektiren Bir Şey Yap', xp: 20, stat: 'Beceri', type: 'zihinsel' }, // Origami, basit çizim vb.
+            { id: 'z16', name: 'El Becerisi Gerektiren Bir Ş şey Yap', xp: 20, stat: 'Beceri', type: 'zihinsel' }, // Origami, basit çizim vb.
 
             // Fiziksel Gelişim
             // Hareket
@@ -404,9 +405,9 @@
 
         // Google API istemcisini başlat
         async function initializeGapiClient() {
-             // BURAYI KENDİ CLIENT ID'NİZ VE SCOPE'LARINIZLA DEĞİŞTİRİN
+             // Client ID'niz ve Scope'unuz burada
              await gapi.client.init({
-                clientId: 'GOOGLE_CLIENT_ID_BURAYA', // BURAYI KENDİ CLIENT ID'NİZLE DEĞİŞTİRİN
+                clientId: '755451034699-ir2d9cjv9ngsckqd14np3citeqnmlrjs.apps.googleusercontent.com',
                 scope: 'https://www.googleapis.com/auth/drive.appdata' // Uygulama verileri için scope
              });
              console.log("Google API istemcisi başlatıldı.");
@@ -418,15 +419,25 @@
         // Çıkış yap butonu handler'ı
         function handleSignOut() {
             google.accounts.id.disableAutoSelect();
-            google.accounts.id.revoke(googleUser.getBasicProfile().getEmail(), done => {
-                console.log('Oturum kapatıldı', done);
+            // googleUser objesi henüz tanımlanmamış olabilir, kontrol ekleyelim
+            if (googleUser && googleUser.getBasicProfile) {
+                 google.accounts.id.revoke(googleUser.getBasicProfile().getEmail(), done => {
+                    console.log('Oturum kapatıldı', done);
+                     elements.authStatus.textContent = "Google Drive bağlantısı kesildi.";
+                     elements.signOutButton.classList.add('hidden'); // Çıkış butonunu gizle
+                     // Kaydet ve Yükle butonlarını devre dışı bırak
+                     elements.saveToDriveButton.disabled = true;
+                     elements.loadFromDriveButton.disabled = true;
+                     driveFileId = null; // Dosya ID'sini sıfırla
+                 });
+            } else {
+                 console.warn("Google User objesi tanımlı değil, sadece görsel çıkış yapıldı.");
                  elements.authStatus.textContent = "Google Drive bağlantısı kesildi.";
-                 elements.signOutButton.classList.add('hidden'); // Çıkış butonunu gizle
-                 // Kaydet ve Yükle butonlarını devre dışı bırak
+                 elements.signOutButton.classList.add('hidden');
                  elements.saveToDriveButton.disabled = true;
                  elements.loadFromDriveButton.disabled = true;
-                 driveFileId = null; // Dosya ID'sini sıfırla
-            });
+                 driveFileId = null;
+            }
         }
 
         // Google API hazır olduğunda çağrılır
@@ -637,7 +648,7 @@
 
         // --- Yardımcı Fonksiyonlar ---
         const todayKey = () => new Date().toLocaleDateString('tr-TR'); // DD.MM.YYYY formatında
-        const todayIsoDate = () => new Date().toISOString().split('T')[0]; // YYYY-MM-DD formatında
+        const todayIsoDate = () => new Date().toISOString().split('T')[0]; //YYYY-MM-DD formatında
 
         // Mevcut ayı YYYY-MM formatında alır
         const getCurrentMonthKey = () => {
@@ -743,7 +754,7 @@
                 xpForNext: xpForNextLevel,
                 progress: xpProgressInLevel,
                 neededForNext: xpForNextLevel === Infinity ? 0 : xpForNextLevel - state.xp,
-                percentage: progressPercentage
+                percentage: percentage
             };
         }
 
@@ -992,7 +1003,7 @@
 
             // Günlük tamamlama geçmişini güncelle (Görev sayısı bazında)
             const today = todayKey(); // DD.MM.YYYY formatında
-            const todayISO = todayIsoDate(); // YYYY-MM-DD formatında
+            const todayISO = todayIsoDate(); //YYYY-MM-DD formatında
 
             if (!state.history[today]) {
                 // Yeni gün kaydı oluştur
