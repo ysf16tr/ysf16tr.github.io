@@ -510,7 +510,7 @@
         async function saveToDrive() {
              if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive || !driveFileId) {
                  showMessage("Uyarı", "Google Drive bağlantısı yok veya dosya ID'si bulunamadı. Veriler yerel depolamaya kaydediliyor.");
-                 saveStateLocal(); // Drive bağlantısı yoksa yerel kaydet
+                 saveStateLocal();
                  return;
              }
              console.log("Durum Drive'a kaydediliyor...");
@@ -536,14 +536,14 @@
                  elements.saveToDriveButton.disabled = true;
                  elements.loadFromDriveButton.disabled = true;
                  showMessage("Hata", "Veriler Google Drive'a kaydedilemedi. Lütfen tekrar deneyin. Veriler yerel olarak kaydedilecek.");
-                 saveStateLocal(); // Drive kaydı başarısız olursa yerel kaydet
+                 saveStateLocal();
              }
         }
 
         async function loadFromDrive() {
             if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive || !driveFileId) {
                  showMessage("Uyarı", "Google Drive bağlantısı yok veya dosya ID'si bulunamadı. Yerel depolamadan yükleniyor.");
-                 loadStateLocal(); // Drive bağlantısı yoksa yerel yükle
+                 loadStateLocal();
                  return;
              }
              console.log("Durum Drive'dan yükleniyor...");
@@ -564,7 +564,7 @@
                  } else {
                      console.error("Yüklenen veri formatı hatalı:", loadedState);
                      showMessage("Hata", "Google Drive'dan yüklenen veri formatı geçerli değil. Yerel depolamadan yükleniyor.");
-                     loadStateLocal(); // Drive verisi hatalıysa yerel yükle
+                     loadStateLocal();
                  }
 
              } catch (error) {
@@ -574,7 +574,7 @@
                  elements.saveToDriveButton.disabled = true;
                  elements.loadFromDriveButton.disabled = true;
                  showMessage("Hata", "Veriler Google Drive'dan yüklenemedi veya dosya boş/bozuk. Lütfen tekrar deneyin. Veriler yerel olarak kaydedilecek.");
-                 loadStateLocal(); // Drive yükleme başarısız olursa yerel yükle
+                 loadStateLocal();
              }
         }
 
@@ -611,7 +611,7 @@
                     saveStateLocal();
                 }
             }
-             console.log("Yerel depolamadan durum yüklendi.");
+             console.log("Yerel depolamadan durum yükleniyor.");
         }
 
         function saveStateLocal() {
@@ -762,14 +762,14 @@
             }
 
             const totalXpNeededForNext = xpForNextLevel - (currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel-1] : 0);
-            const percentage = (xpForNextLevel === Infinity) ? 100 : Math.min(100, (xpProgressInLevel / totalXpNeededForNext) * 100);
+            const progressPercentage = (xpForNextLevel === Infinity) ? 100 : Math.min(100, (xpProgressInLevel / totalXpNeededForNext) * 100);
 
             return {
                 level: currentLevel,
                 xpForNext: xpForNextLevel,
                 progress: xpProgressInLevel,
                 neededForNext: xpForNextLevel === Infinity ? 0 : xpForNextLevel - state.xp,
-                percentage: percentage
+                percentage: progressPercentage
             };
         }
 
@@ -785,50 +785,55 @@
              if (allTasks.length === 0) {
                  elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz fiziksel görev yok.</p>';
                  elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz zihinsel görev yok.</p>';
-                 return;
+             } else {
+                 allTasks.forEach(task => {
+                     const taskElement = document.createElement('div');
+                     taskElement.className = 'task flex items-center p-3 rounded-lg transition duration-200 ease-in-out hover:bg-gray-700';
+                     taskElement.dataset.xp = task.xp;
+                     taskElement.dataset.stat = task.stat;
+                     taskElement.dataset.type = task.type;
+                     taskElement.dataset.id = task.id;
+
+                     const isChecked = state.tasks[task.id] || false;
+                     const labelClass = isChecked ? 'flex-1 cursor-pointer text-rpg-text line-through text-rpg-subtext' : 'flex-1 cursor-pointer text-rpg-text';
+
+                     const statDisplay = task.stat ? task.stat.substring(0,3) + '.' : '';
+
+                     taskElement.innerHTML = `
+                         <input type="checkbox" id="${task.id}" class="task-checkbox form-checkbox h-5 w-5 text-rpg-accent bg-gray-600 border-gray-500 rounded focus:ring-rpg-accent mr-3 cursor-pointer" ${isChecked ? 'checked' : ''}>
+                         <label for="${task.id}" class="${labelClass}">${task.name}</label>
+                         <span class="text-xs text-rpg-subtext ml-2">(+${task.xp} XP, +1 ${statDisplay})</span>
+                         ${state.customTasks.find(ct => ct.id === task.id) ? '<button class="delete-task-btn text-red-500 hover:text-red-400 text-xs ml-2 p-1" title="Görevi Sil"><i class="fas fa-times"></i></button>' : ''}
+                     `;
+
+                     const checkbox = taskElement.querySelector('.task-checkbox');
+                     checkbox.addEventListener('change', handleTaskChange);
+
+                     const deleteButton = taskElement.querySelector('.delete-task-btn');
+                     if (deleteButton) {
+                         deleteButton.addEventListener('click', () => handleDeleteTask(task.id));
+                     }
+
+                     if (task.type === 'fiziksel') {
+                         elements.physicalTasksContainer.appendChild(taskElement);
+                     } else if (task.type === 'zihinsel') {
+                         elements.mentalTasksContainer.appendChild(taskElement);
+                     }
+                 });
              }
 
-             allTasks.forEach(task => {
-                 const taskElement = document.createElement('div');
-                 taskElement.className = 'task flex items-center p-3 rounded-lg transition duration-200 ease-in-out hover:bg-gray-700';
-                 taskElement.dataset.xp = task.xp;
-                 taskElement.dataset.stat = task.stat;
-                 taskElement.dataset.type = task.type;
-                 taskElement.dataset.id = task.id;
-
-                 const isChecked = state.tasks[task.id] || false;
-                 const labelClass = isChecked ? 'flex-1 cursor-pointer text-rpg-text line-through text-rpg-subtext' : 'flex-1 cursor-pointer text-rpg-text';
-
-                 const statDisplay = task.stat ? task.stat.substring(0,3) + '.' : '';
-
-                 taskElement.innerHTML = `
-                     <input type="checkbox" id="${task.id}" class="task-checkbox form-checkbox h-5 w-5 text-rpg-accent bg-gray-600 border-gray-500 rounded focus:ring-rpg-accent mr-3 cursor-pointer" ${isChecked ? 'checked' : ''}>
-                     <label for="${task.id}" class="${labelClass}">${task.name}</label>
-                     <span class="text-xs text-rpg-subtext ml-2">(+${task.xp} XP, +1 ${statDisplay})</span>
-                     ${state.customTasks.find(ct => ct.id === task.id) ? '<button class="delete-task-btn text-red-500 hover:text-red-400 text-xs ml-2 p-1" title="Görevi Sil"><i class="fas fa-times"></i></button>' : ''}
-                 `;
-
-                 const checkbox = taskElement.querySelector('.task-checkbox');
-                 checkbox.addEventListener('change', handleTaskChange);
-
-                 const deleteButton = taskElement.querySelector('.delete-task-btn');
-                 if (deleteButton) {
-                     deleteButton.addEventListener('click', () => handleDeleteTask(task.id));
-                 }
-
-                 if (task.type === 'fiziksel') {
-                     elements.physicalTasksContainer.appendChild(taskElement);
-                 } else if (task.type === 'zihinsel') {
-                     elements.mentalTasksContainer.appendChild(taskElement);
-                 }
-             });
-
-             if (elements.physicalTasksContainer.children.length === 0) {
-                 elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz fiziksel görev yok.</p>';
+             if (elements.physicalTasksContainer.children.length === 0 && allTasks.filter(task => task.type === 'fiziksel').length > 0) {
+                 elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Tüm fiziksel görevler tamamlandı!</p>';
+             } else if (elements.physicalTasksContainer.children.length === 0) {
+                  elements.physicalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz fiziksel görev yok.</p>';
              }
-             if (elements.mentalTasksContainer.children.length === 0) {
-                 elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz zihinsel görev yok.</p>';
+
+             if (elements.mentalTasksContainer.children.length === 0 && allTasks.filter(task => task.type === 'zihinsel').length > 0) {
+                  elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Tüm zihinsel görevler tamamlandı!</p>';
+             } else if (elements.mentalTasksContainer.children.length === 0) {
+                  elements.mentalTasksContainer.innerHTML = '<p class="text-rpg-subtext text-sm italic">Henüz zihinsel görev yok.</p>';
              }
+
         }
 
 
@@ -1174,7 +1179,6 @@
                  Notification.requestPermission();
             }
 
-            // Uygulama başlangıcında önce yerel depolamadan yükle
             loadStateLocal();
             initializeChart();
             populateStatOptions();
@@ -1197,12 +1201,6 @@
             renderAll();
 
             console.log("Süper Zinde RPG v4 Başlatıldı!");
-
-            // Uygulama başlatıldıktan sonra Google API'yi yüklemeyi dene
-            // Bu, Google girişinin görünmesini ve Drive bağlantısının kurulmasını sağlar.
-            // Eğer kullanıcı giriş yaparsa veya zaten oturum açıksa,
-            // handleCredentialResponse -> initializeGapiClient akışı çalışır.
-            // Eğer bu akış başarılı olursa isGoogleDriveConnected true olur.
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
