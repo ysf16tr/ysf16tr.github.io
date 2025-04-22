@@ -6,19 +6,17 @@
     <title>Yusuf Eden</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* CSS Değişkenleri */
         :root {
-            --gradient-size: 750px; /* Gradyan artık arka plan değil, tutuyorum ama kullanılmayacak */
+            --gradient-size: 750px;
             --gradient-speed: 50s;
             --gradient-easing: cubic-bezier(0.8, 0.2, 0.2, 0.8);
-            --primary-color: #00b0ff; /* Vurgu rengi */
-            --text-color: #f0f0f0; /* Açık metin rengi */
-            --bg-color-dark: #1a1a1a; /* Koyu arka plan */
-            --bg-color-medium: #282828; /* Orta koyu arka plan */
-            --bg-color-light: #3a3a3a; /* Açık koyu arka plan */
+            --primary-color: #00b0ff;
+            --text-color: #f0f0f0;
+            --bg-color-dark: #1a1a1a;
+            --bg-color-medium: #282828;
+            --bg-color-light: #3a3a3a;
         }
 
-        /* Küçük ekranlar için değişken boyutu */
         @media (min-width: 720px) {
              :root {
                 --gradient-size: 500px;
@@ -26,42 +24,30 @@
         }
 
 
-        /* Genel Stiller */
         html, body {
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: var(--bg-color-dark); /* Yedek koyu arka plan */
-            color: var(--text-color); /* Açık metin rengi */
-            line-height: 1.8; /* Satır yüksekliğini artırdım */
-            /* Varsayılan kaydırmayı devre dışı bırak */
+            background-color: var(--bg-color-dark);
+            color: var(--text-color);
+            line-height: 1.8;
             overflow: hidden;
-            height: 100%; /* Tam ekran yüksekliği */
-            position: relative; /* ::before için konumlandırma bağlamı */
-            text-rendering: optimizeLegibility; /* Metin okunurluğunu iyileştir */
-            -webkit-font-smoothing: antialiased; /* Font yumuşatma */
-            -moz-osx-font-smoothing: grayscale; /* Font yumuşatma */
+            height: 100%;
+            position: relative;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
-         /* === Kaydırma Çubuğunu Gizle === */
         body {
-             /* Webkit tabanlı tarayıcılar (Chrome, Safari, Edge) */
-            &::-webkit-scrollbar {
-                display: none; /* Kaydırma çubuğunu tamamen gizle */
+             &::-webkit-scrollbar {
+                display: none;
             }
 
-            /* Firefox */
-            scrollbar-width: none; /* Kaydırma çubuğunu gizle */
+            scrollbar-width: none;
 
-            /* IE 10+ */
-            -ms-overflow-style: none; /* Kaydırma çubuğunu gizle */
-            /* =============================== */
+            -ms-overflow-style: none;
         }
-
-        /* === Animasyonlu Morphing Gradyan Arka Plan (Artık kullanılmıyor, video ile değiştirildi) === */
-        /* body::before { ... } */
-        /* @keyframes morphing-gradient-animation { ... } */
-         /* =========================================== */
 
 
         .container {
@@ -70,75 +56,65 @@
             padding: 0 20px;
         }
 
-        /* Bölüm Stilleri */
         section {
             padding: 100px 0;
-            min-height: 100vh; /* Tam ekran yüksekliği */
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             text-align: center;
             position: relative;
-            overflow: hidden; /* Animasyonlar için */
-            /* JavaScript kaydırma kullanıldığı için scroll-snap kaldırıldı */
-            /* scroll-snap-align: start; */
-             z-index: 1; /* İçeriğin arka planın üstünde kalmasını sağla */
+            overflow: hidden;
+             z-index: 1;
         }
 
-        /* Bölüm arka planları - RGBA ile şeffaflık */
         section:nth-child(odd) {
-            background-color: rgba(40, 40, 40, 0.7); /* Koyu gri, %70 opak */
+            background-color: rgba(40, 40, 40, 0.7);
         }
          section:nth-child(even) {
-            background-color: rgba(26, 26, 26, 0.7); /* Daha koyu gri, %70 opak */
+            background-color: rgba(26, 26, 26, 0.7);
         }
 
-        /* === Video Arka Plan Stilleri === */
         section video {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Videonun bölümü kaplamasını sağla */
-            z-index: -1; /* İçeriğin arkasında kalmasını sağla */
+            object-fit: cover;
+            z-index: -1;
         }
-        /* =============================== */
 
 
-        /* Başlık (h2) Stilleri */
         section h2 {
-            font-size: 3em; /* Başlık boyutunu biraz küçülttüm */
-            margin-bottom: 20px; /* Alt boşluğu azalttım */
-            color: var(--primary-color); /* Vurgu rengi */
-            opacity: 0; /* Animasyon başlangıcı */
-            transform: translateY(50px); /* Animasyon başlangıcı */
+            font-size: 3em;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            opacity: 0;
+            transform: translateY(50px);
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-            text-shadow: 0 0 8px rgba(0, 176, 255, 0.6); /* Gölge yoğunluğunu artırdım */
-            font-weight: 800; /* Daha kalın font */
-            letter-spacing: 1.5px; /* Harf aralığını azalttım */
+            text-shadow: 0 0 8px rgba(0, 176, 255, 0.6);
+            font-weight: 800;
+            letter-spacing: 1.5px;
         }
 
-        /* Paragraf (p) Stilleri */
         section p {
-            font-size: 1.1em; /* Paragraf boyutunu küçülttüm */
-            max-width: 800px; /* Maksimum genişliği azalttım */
-            margin: 0 auto 25px; /* Alt boşluğu azalttım */
-            opacity: 0; /* Animasyon başlangıcı */
-            transform: translateY(50px); /* Animasyon başlangıcı */
+            font-size: 1.1em;
+            max-width: 800px;
+            margin: 0 auto 25px;
+            opacity: 0;
+            transform: translateY(50px);
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-            transition-delay: 0.2s; /* Başlıktan sonra başlasın */
-            color: #d0d0d0; /* Paragraf rengini biraz daha açık gri yaptım */
-            text-shadow: 0 0 3px rgba(240, 240, 240, 0.2); /* Beyaz yazılara hafif gölge */
+            transition-delay: 0.2s;
+            color: #d0d0d0;
+            text-shadow: 0 0 3px rgba(240, 240, 240, 0.2);
         }
 
-        /* Bölüm İçindeki Elementler İçin Fade-in Animasyonu */
         .fade-in {
             opacity: 1 !important;
             transform: translateY(0) !important;
         }
 
-        /* İlk Bölüm: İsim ve Profil Resmi */
         #home {
             display: flex;
             flex-direction: column;
@@ -149,174 +125,166 @@
         #home .profile-image {
             width: 200px;
             height: 200px;
-            border-radius: 50%; /* Yuvarlak resim */
+            border-radius: 50%;
             object-fit: cover;
             box-shadow: 0 0 80px rgb(94 129 128);
             margin-bottom: 20px;
             border: 3px solid #4c5715;
-            opacity: 0; /* Animasyon başlangıcı */
-            transform: scale(0.8); /* Animasyon başlangıcı */
+            opacity: 0;
+            transform: scale(0.8);
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
         }
 
-        /* İsim (h1) Stili */
         #home h1 {
-            font-size: 4.5em; /* İsim boyutunu küçülttüm */
-            margin-bottom: 10px; /* Alt boşluğu azalttım */
+            font-size: 4.5em;
+            margin-bottom: 10px;
             color: var(--text-color);
-            opacity: 0; /* Animasyon başlangıcı */
-            transform: translateY(50px); /* Animasyon başlangıcı */
+            opacity: 0;
+            transform: translateY(50px);
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-            font-weight: 900; /* Daha kalın font */
-            letter-spacing: 2px; /* Harf aralığını azalttım */
+            font-weight: 900;
+            letter-spacing: 2px;
             text-shadow: 0 0 10px rgb(140 220 255);
         }
 
-        /* Alt Başlık (.subtitle) Stili */
         #home .subtitle {
-            font-size: 1.5em; /* Alt başlık boyutunu küçülttüm */
+            font-size: 1.5em;
             color: #b0b0b0;
-            opacity: 0; /* Animasyon başlangıcı */
-            transform: translateY(50px); /* Animasyon başlangıcı */
+            opacity: 0;
+            transform: translateY(50px);
             transition: opacity 0.8s ease-out, transform 0.8s ease-out;
             transition-delay: 0.2s;
-            font-weight: 600; /* Daha belirgin font */
+            font-weight: 600;
             letter-spacing: 1px;
-            text-shadow: 0 0 3px rgba(176, 176, 176, 0.2); /* Hafif gölge */
+            text-shadow: 0 0 3px rgba(176, 176, 176, 0.2);
         }
 
-        /* Diğer Bölümler */
         #about, #skills, #projects, #interests, #contact {
-            /* Ortak stiller yukarıda section içinde tanımlandı */
         }
 
-        /* Yetenekler Bölümü */
         #skills .skill-list {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 15px; /* Boşluğu azalttım */
-            margin-top: 30px; /* Üst boşluğu azalttım */
+            gap: 15px;
+            margin-top: 30px;
         }
 
         #skills .skill-item {
             background-color: var(--bg-color-light);
-            padding: 10px 20px; /* Padding azalttım */
-            border-radius: 20px; /* Radius azalttım */
-            font-size: 1em; /* Font boyutu azalttım */
-            opacity: 0; /* Animasyon başlangıcı */
-            transform: translateY(30px); /* Animasyon başlangıcı */
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1em;
+            opacity: 0;
+            transform: translateY(30px);
             transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-            font-weight: 600; /* Daha belirgin font */
-            color: var(--primary-color); /* Vurgu rengi */
-            border: 1px solid var(--primary-color); /* Çerçeve ekledim */
-            box-shadow: 0 0 6px rgba(0, 176, 255, 0.4); /* Gölge yoğunluğunu artırdım */
+            font-weight: 600;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 0 6px rgba(0, 176, 255, 0.4);
         }
 
-        /* Projeler/Deneyimler Bölümü */
         #projects .project-list {
-            text-align: left; /* Metni sola hizala */
-            max-width: 800px; /* Maksimum genişliği azalttım */
-            margin: 30px auto 0; /* Üst boşluğu azalttım */
+            text-align: left;
+            max-width: 800px;
+            margin: 30px auto 0;
         }
 
         #projects .project-item {
             background-color: var(--bg-color-medium);
-            padding: 20px; /* Padding azalttım */
-            margin-bottom: 20px; /* Alt boşluğu azalttım */
-            border-radius: 8px; /* Radius azalttım */
-            opacity: 0; /* Animasyon başlangıcı */
-            transform: translateY(50px); /* Animasyon başlangıcı */
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(50px);
             transition: opacity 0.7s ease-out, transform 0.7s ease-out;
-            border-left: 5px solid var(--primary-color); /* Sol kenarlık ekledim */
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4); /* Gölge yoğunluğunu artırdım */
+            border-left: 5px solid var(--primary-color);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
         }
 
         #projects .project-item h3 {
             color: var(--primary-color);
             margin-top: 0;
             margin-bottom: 10px;
-            font-size: 1.3em; /* Başlık boyutunu azalttım */
-            font-weight: 700; /* Daha kalın font */
+            font-size: 1.3em;
+            font-weight: 700;
         }
 
          #projects .project-item p {
-            font-size: 1em; /* Paragraf boyutunu azalttım */
+            font-size: 1em;
             margin-bottom: 0;
-            opacity: 1; /* Paragraf animasyonu için */
-             transform: translateY(0); /* Paragraf animasyonu için */
-             transition: none; /* Paragraf animasyonu için */
-             color: #d0d0d0; /* Paragraf rengini biraz daha açık gri yaptım */
+            opacity: 1;
+             transform: translateY(0);
+             transition: none;
+             color: #d0d0d0;
         }
 
 
-         /* İletişim Bölümü */
-        #contact a {
+         #contact a {
             color: var(--primary-color);
             text-decoration: none;
-            font-size: 1.2em; /* Font boyutunu azalttım */
-            margin: 0 15px; /* Boşluğu azalttım */
-            transition: color 0.3s ease, transform 0.3s ease; /* Hover animasyonu ekledim */
-            display: inline-block; /* Transform için gerekli */
+            font-size: 1.2em;
+            margin: 0 15px;
+            transition: color 0.3s ease, transform 0.3s ease;
+            display: inline-block;
         }
 
         #contact a:hover {
-            color: #0077cc; /* Hover rengi */
-            transform: translateY(-3px); /* Hafif yukarı kayma efekti */
+            color: #0077cc;
+            transform: translateY(-3px);
         }
 
 
-        /* Küçük Ekranlar İçin Düzenlemeler */
         @media (max-width: 768px) {
             section {
-                padding: 60px 0; /* Padding azalttım */
+                padding: 60px 0;
             }
 
             section h2 {
-                font-size: 2.2em; /* Başlık boyutunu küçülttüm */
+                font-size: 2.2em;
                 margin-bottom: 15px;
             }
 
             section p {
-                font-size: 0.9em; /* Paragraf boyutunu küçülttüm */
+                font-size: 0.9em;
                 margin-bottom: 20px;
             }
 
             #home h1 {
-                font-size: 3em; /* İsim boyutunu küçülttüm */
+                font-size: 3em;
             }
 
             #home .subtitle {
-                font-size: 1.1em; /* Alt başlık boyutunu küçülttüm */
+                font-size: 1.1em;
             }
 
             #home .profile-image {
-                width: 120px; /* Resim boyutunu küçülttüm */
+                width: 120px;
                 height: 120px;
                 margin-bottom: 15px;
             }
 
             #skills .skill-list {
-                gap: 10px; /* Boşluğu azalttım */
+                gap: 10px;
                 margin-top: 20px;
             }
 
              #skills .skill-item {
-                padding: 8px 15px; /* Padding azalttım */
-                font-size: 0.9em; /* Font boyutu azalttım */
+                padding: 8px 15px;
+                font-size: 0.9em;
              }
 
              #projects .project-item {
-                 padding: 15px; /* Padding azalttım */
+                 padding: 15px;
                  margin-bottom: 15px;
              }
 
              #projects .project-item h3 {
-                 font-size: 1.1em; /* Başlık boyutunu küçülttüm */
+                 font-size: 1.1em;
              }
 
              #contact a {
-                 font-size: 1em; /* Font boyutunu küçülttüm */
+                 font-size: 1em;
                  margin: 0 10px;
              }
         }
@@ -348,7 +316,7 @@
 Benim varoluşum, hesaplı düşünce ve sarsılmaz iradenin eseridir.<br>
 Strateji, zihnimde keskinleşir; diplomasi, dilimde şekillenir.<br>
 Bilgiyle beslenir, güçle yükselir, durmaksızın evrilirim.<br>
-Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafından çizilecektir.    
+Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafından çizilecektir.
             </p>
              <p>
                 Her yeni zorluk, aşılması gereken bir engel, öğrenilmesi gereken yeni bir derstir. Sınırları zorlamak, kendimi aşmak ve daima en üst düzeyde olmak, benim doğamdır.
@@ -414,17 +382,12 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
     </section>
 
     <section id="contact">
-        <!--
-         <video autoplay loop muted playsinline>
-            <source src="[Altıncı Bölüm Video URL'si]" type="video/mp4">
-            Tarayıcınız video etiketini desteklemiyor.
-        </video>-->
         <div class="container">
             <h2>İletişim Kanalları</h2>
             <p>Benimle bağlantılar kurmak için kullanılabilecek yollar:</p>
             <p>
                 <a href="mailto:ysf316tr@gmail.com">Güvenli İletişim Hattı (E-posta)</a>
-                <a href="https://github.com/ysf116tr">Kod Arşivi (GitHub)</a>
+                <a href="https://github.com/DXpaTRick">Kod Arşivi (GitHub)</a>
                 </p>
         </div>
     </section>
@@ -435,63 +398,48 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
     </audio>
 
     <script>
-        // Sayfa yüklendiğinde ilk bölümdeki elementlerin görünmesi için
         document.addEventListener('DOMContentLoaded', () => {
              document.querySelector('#home h1').classList.add('fade-in');
              document.querySelector('#home .subtitle').classList.add('fade-in');
              document.querySelector('#home .profile-image').classList.add('fade-in');
 
              const audioElement = document.getElementById('background-music');
-             let musicStarted = false; // Müziğin başlayıp başlamadığını takip etmek için bayrak
+             let musicStarted = false;
 
-             // Müziği başlatacak fonksiyon
              function startMusic() {
                  if (!musicStarted) {
                      audioElement.play().then(() => {
-                         musicStarted = true; // Müzik başarıyla başladı
-                         console.log("Müzik başladı.");
-                         // Olay dinleyicilerini kaldır
+                         musicStarted = true;
                          window.removeEventListener('click', startMusic);
                          window.removeEventListener('wheel', startMusic);
-                         // İsteğe bağlı: Mobil cihazlar için touchstart olayını da kaldırabilirsiniz
                          window.removeEventListener('touchstart', startMusic);
                      }).catch(error => {
-                         console.log("Müzik çalma hatası (kullanıcı etkileşimi gerekiyor):", error);
-                         // Hata durumunda (örneğin hala otomatik oynatma engelleniyorsa)
-                         // kullanıcıya bilgi verebilir veya farklı bir yaklaşım düşünebilirsiniz.
+                         console.log("Müzik çalma hatası:", error);
                      });
                  }
              }
 
-             // Sayfaya tıklama veya kaydırma olaylarını dinle
              window.addEventListener('click', startMusic);
              window.addEventListener('wheel', startMusic);
-             // Mobil cihazlar için touchstart olayını da ekleyelim
              window.addEventListener('touchstart', startMusic);
-
         });
 
-        // Bölüm İçindeki Elementler İçin Fade-in Animasyonu (IntersectionObserver korunuyor)
         const sections = document.querySelectorAll('section');
 
         const observer = new IntersectionObserver(entries => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    // Bölüm görünür olduğunda içindeki elementlere fade-in sınıfını ekle
                     entry.target.querySelectorAll('h2, p, .profile-image, .subtitle, .skill-item, .project-item').forEach(element => {
                         element.classList.add('fade-in');
                     });
-                    // Animasyon bir kere çalışsın (isteğe bağlı)
-                    // observer.unobserve(entry.target);
                 } else {
-                     // Bölüm görünürlükten çıktığında animasyon sınıfını kaldır (isteğe bağlı)
                      entry.target.querySelectorAll('h2, p, .profile-image, .subtitle, .skill-item, .project-item').forEach(element => {
                         element.classList.remove('fade-in');
                     });
                 }
             });
         }, {
-            threshold: 0.1 // Elementin %10'u göründüğünde tetikle
+            threshold: 0.1
         });
 
         sections.forEach(section => {
@@ -499,63 +447,89 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
         });
 
 
-        // === JavaScript ile Kaydırma Kontrolü ===
         let currentSectionIndex = 0;
-        let isScrolling = false; // Kaydırma devam ederken yeni kaydırmaları engellemek için bayrak
-        const scrollDuration = 1000; // Geçiş animasyon süresi (ms)
+        let isScrolling = false;
+        const scrollDuration = 1000;
+        let touchStartY = 0;
+        const swipeThreshold = 50;
 
-        // Fare tekerleği olayını dinle
         window.addEventListener('wheel', (event) => {
-            // Eğer zaten kaydırma yapılıyorsa veya bölüm sayısı 1 veya daha az ise işlemi durdur
             if (isScrolling || sections.length <= 1) {
                 return;
             }
 
-            // Varsayılan kaydırma davranışını engelle
             event.preventDefault();
 
-            // Kaydırma yönünü belirle
-            const direction = event.deltaY > 0 ? 1 : -1; // 1 aşağı, -1 yukarı
+            const direction = event.deltaY > 0 ? 1 : -1;
 
-            // Bir sonraki bölümün indeksini hesapla
+            scrollToSection(direction);
+
+        }, { passive: false });
+
+        window.addEventListener('touchstart', (event) => {
+             if (isScrolling || sections.length <= 1) {
+                return;
+            }
+            if (event.touches.length === 1) {
+                touchStartY = event.touches[0].clientY;
+            }
+        });
+
+        window.addEventListener('touchmove', (event) => {
+             if (isScrolling || sections.length <= 1) {
+                return;
+            }
+            event.preventDefault();
+        }, { passive: false });
+
+        window.addEventListener('touchend', (event) => {
+             if (isScrolling || sections.length <= 1) {
+                return;
+            }
+
+            const touchEndY = event.changedTouches[0].clientY;
+            const swipeDistance = touchEndY - touchStartY;
+
+            if (Math.abs(swipeDistance) > swipeThreshold) {
+                const direction = swipeDistance < 0 ? 1 : -1;
+
+                scrollToSection(direction);
+            }
+        });
+
+        function scrollToSection(direction) {
             let nextSectionIndex = currentSectionIndex + direction;
 
-            // İndeksin sınırlar içinde kalmasını sağla
             if (nextSectionIndex < 0) {
-                nextSectionIndex = 0; // İlk bölümden yukarı kaydırma
+                nextSectionIndex = 0;
             } else if (nextSectionIndex >= sections.length) {
-                nextSectionIndex = sections.length - 1; // Son bölümden aşağı kaydırma
+                nextSectionIndex = sections.length - 1;
             }
 
-            // Eğer hedef bölüm mevcut bölümden farklıysa kaydırma yap
             if (nextSectionIndex !== currentSectionIndex) {
-                isScrolling = true; // Kaydırma başladı bayrağını ayarla
+                isScrolling = true;
 
-                // Hedef bölüme yumuşak kaydırma yap
                 sections[nextSectionIndex].scrollIntoView({ behavior: 'smooth' });
 
-                // Mevcut bölüm indeksini güncelle
                 currentSectionIndex = nextSectionIndex;
 
-                // Kaydırma animasyonu bittikten sonra bayrağı sıfırla
                 setTimeout(() => {
                     isScrolling = false;
-                }, scrollDuration); // scrollIntoView animasyon süresine yakın bir değer
+                }, scrollDuration);
             }
-        }, { passive: false }); // preventDefault kullanabilmek için passive: false
+        }
 
-        // Sayfa yüklendiğinde mevcut bölümü belirle (sayfa yenilendiğinde doğru konumda başlamak için)
+
         window.addEventListener('load', () => {
             const sectionInView = Array.from(sections).findIndex(section => {
                  const rect = section.getBoundingClientRect();
-                 return rect.top >= 0 && rect.top < window.innerHeight * 0.5; // Ekranın üst yarısında olan ilk bölümü bul
+                 return rect.top >= 0 && rect.top < window.innerHeight * 0.5;
             });
             if (sectionInView !== -1) {
                 currentSectionIndex = sectionInView;
             }
         });
 
-         // Pencere boyutu değiştiğinde mevcut bölümün tekrar hesaplanması gerekebilir (isteğe bağlı ama iyi pratik)
          window.addEventListener('resize', () => {
              const sectionInView = Array.from(sections).findIndex(section => {
                  const rect = section.getBoundingClientRect();
