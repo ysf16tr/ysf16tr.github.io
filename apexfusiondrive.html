@@ -73,13 +73,13 @@
          .btn-secondary {
             @apply bg-gray-600 text-rpg-text hover:bg-gray-500 focus:ring-gray-400;
         }
-        .btn-danger {
+         .btn-danger {
             @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
         }
-         .btn-success { /* Yeni buton stili */
+         .btn-success {
             @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
         }
-         .btn-info { /* Yeni buton stili */
+         .btn-info {
             @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
         }
     </style>
@@ -263,36 +263,32 @@
 
 
     <script>
-        // --- Sabitler ve Ayarlar ---
         const LOCAL_STORAGE_KEYS = {
-            xp: 'rpg_xp_v4', // Sürüm güncellendi
+            xp: 'rpg_xp_v4',
             history: 'rpg_history_v4',
             tasks: 'rpg_tasks_v4',
             stats: 'rpg_stats_v4',
             customTasks: 'rpg_customTasks_v4',
             lastCompletionDate: 'rpg_lastCompletionDate_v4',
             streak: 'rpg_streak_v4',
-            lastStatResetMonth: 'rpg_lastStatResetMonth_v4' // Aylık sıfırlama takibi için yeni anahtar
+            lastStatResetMonth: 'rpg_lastStatResetMonth_v4'
         };
 
-        // Google Drive için dosya adı
         const DRIVE_FILE_NAME = 'apex_fusion_save_data.json';
-        let driveFileId = null; // Drive'daki dosyanın ID'si
+        let driveFileId = null;
+        let isGoogleDriveConnected = false;
 
-        // Bir aylık hedeflere uygun yeni seviye eşikleri
         const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5000, 7500, 10000, 13000];
 
-        // Bir aylık hedeflere uygun yeni rozetler, XP eşikleri ve Rütbeler
         const BADGES = [
-            { xp: 500, icon: '🥈', name: 'Yol Haritası Çizer', rank: 'Başlangıç' }, // Seviye 2 için
-            { xp: 1500, icon: '🥇', name: 'Zihin Kalesinin Mimarı', rank: 'Yükseliş' }, // Seviye 3 için
-            { xp: 3000, icon: '💎', name: 'Potansiyel Geliştirici', rank: 'Ustalık' }, // Seviye 4 için
-            { xp: 5000, icon: '🏆', name: 'Strateji Ustası Adayı', rank: 'Kahramanlık' }, // Seviye 5 için
-            { xp: 7500, icon: '🌟', name: 'İçsel Usta', rank: 'Efsanevi' }, // Seviye 6 için
-            { xp: 13000, icon: '✨', name: 'Gerçeklik Simyacısı', rank: 'Gerçeklik' }, // Seviye 8 için
+            { xp: 500, icon: '🥈', name: 'Yol Haritası Çizer', rank: 'Başlangıç' },
+            { xp: 1500, icon: '🥇', name: 'Zihin Kalesinin Mimarı', rank: 'Yükseliş' },
+            { xp: 3000, icon: '💎', name: 'Potansiyel Geliştirici', rank: 'Ustalık' },
+            { xp: 5000, icon: '🏆', name: 'Strateji Ustası Adayı', rank: 'Kahramanlık' },
+            { xp: 7500, icon: '🌟', name: 'İçsel Usta', rank: 'Efsanevi' },
+            { xp: 13000, icon: '✨', name: 'Gerçeklik Simyacısı', rank: 'Gerçeklik' },
         ];
 
-        // Güncellenmiş Başlangıç Yetenekleri (Statlar)
         const INITIAL_STATS = {
             Strateji: 0,
             Bilgi: 0,
@@ -304,44 +300,32 @@
             Beden: 0
         };
 
-        // Sadeleştirilmiş ve güncellenmiş görev listesi
         const DEFAULT_TASKS = [
-            // Zihinsel Gelişim
-            // Strateji
             { id: 'z1', name: 'Sudoku Çöz (Orta/Zor)', xp: 20, stat: 'Strateji', type: 'zihinsel' },
-            { id: 'z2', name: 'Satranç Bulmacası Çöz', xp: 20, stat: 'Strateji', type: 'zihinsel' }, // Günlük en az 1 adet
-            { id: 'z3', name: 'Strateji Analizi Yap', xp: 35, stat: 'Strateji', type: 'zihinsel' }, // Oyun, senaryo veya günlük plan stratejisi analizi
+            { id: 'z2', name: 'Satranç Bulmacası Çöz', xp: 20, stat: 'Strateji', type: 'zihinsel' },
+            { id: 'z3', name: 'Strateji Analizi Yap', xp: 35, stat: 'Strateji', type: 'zihinsel' },
 
-            // Bilgi
-            { id: 'z5', name: 'Bilgilendirici İçerik Tüket (15 dk)', xp: 15, stat: 'Bilgi', type: 'zihinsel' }, // Podcast/Belgesel/Eğitim Vd.
-            { id: 'z7', name: 'Kısa Araştırma Yap', xp: 20, stat: 'Bilgi', type: 'zihinsel' }, // Genel kültür veya bilgi teyidi
+            { id: 'z5', name: 'Bilgilendirici İçerik Tüket (15 dk)', xp: 15, stat: 'Bilgi', type: 'zihinsel' },
+            { id: 'z7', name: 'Kısa Araştırma Yap', xp: 20, stat: 'Bilgi', type: 'zihinsel' },
 
-            // Yaratıcılık
             { id: 'z9', name: 'Objenin Yaratıcı Kullanım Alanlarını Düşün (En az 3)', xp: 20, stat: 'Yaratıcılık', type: 'zihinsel' },
             { id: 'z10', name: 'İki Alakasız Kavramı Birleştirip Fikir Üret', xp: 25, stat: 'Yaratıcılık', type: 'zihinsel' },
 
-            // Farkındalık
-            { id: 'z12', name: 'Günlük Olay/Duygu Yansıtma Yaz', xp: 15, stat: 'Farkındalık', type: 'zihinsel' }, // En az 2 cümle
-            { id: 'z13', name: 'Yaptığın Bir Hatayı Analiz Et', xp: 20, stat: 'Farkındalık', type: 'zihinsel' }, // Ve bundan ders çıkar
+            { id: 'z12', name: 'Günlük Olay/Duygu Yansıtma Yaz', xp: 15, stat: 'Farkındalık', type: 'zihinsel' },
+            { id: 'z13', name: 'Yaptığın Bir Hatayı Analiz Et', xp: 20, stat: 'Farkındalık', type: 'zihinsel' },
 
-            // Beceri
             { id: 'z14', name: 'Yeni Küçük Pratik Beceri Öğren/Pratik Yap (15-20 dk)', xp: 30, stat: 'Beceri', type: 'zihinsel' },
-            { id: 'z16', name: 'El Becerisi Gerektiren Bir Ş şey Yap', xp: 20, stat: 'Beceri', type: 'zihinsel' }, // Origami, basit çizim vb.
+            { id: 'z16', name: 'El Becerisi Gerektiren Bir Ş şey Yap', xp: 20, stat: 'Beceri', type: 'zihinsel' },
 
-            // Fiziksel Gelişim
-            // Hareket
-            { id: 'f3', name: 'Günlük Egzersiz Yap (20-30 dk)', xp: 25, stat: 'Hareket', type: 'fiziksel' }, // Vücut ağırlığı, kardiyo veya sabah koşusu dahil
+            { id: 'f3', name: 'Günlük Egzersiz Yap (20-30 dk)', xp: 25, stat: 'Hareket', type: 'fiziksel' },
 
-            // Sağlık
-            { id: 'f4', name: 'Yeterli Su Miktarını İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' }, // Günlük hedef
-            { id: 'f11', name: 'Günlük Cilt Bakımı Yap', xp: 10, stat: 'Sağlık', type: 'fiziksel' }, // Yeni görev eklendi
+            { id: 'f4', name: 'Yeterli Su Miktarını İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' },
+            { id: 'f11', name: 'Günlük Cilt Bakımı Yap', xp: 10, stat: 'Sağlık', type: 'fiziksel' },
 
-            // Beden
-            { id: 'f8', name: 'Nefese Odaklan (5 dk)', xp: 10, stat: 'Beden', type: 'fiziksel' }, // Nefes egzersizi
+            { id: 'f8', name: 'Nefese Odaklan (5 dk)', xp: 10, stat: 'Beden', type: 'fiziksel' },
         ];
 
 
-        // --- DOM Elementleri ---
         const elements = {
             physicalTasksContainer: document.getElementById('physicalTasks'),
             mentalTasksContainer: document.getElementById('mentalTasks'),
@@ -361,136 +345,107 @@
             confirmationModal: document.getElementById('confirmationModal'),
             modalCancelButton: document.getElementById('modalCancelButton'),
             modalConfirmButton: document.getElementById('modalConfirmButton'),
-            messageModal: document.getElementById('messageModal'), // Yeni mesaj kutusu modalı
+            messageModal: document.getElementById('messageModal'),
             messageModalTitle: document.getElementById('message-modal-title'),
             messageModalMessage: document.getElementById('message-modal-message'),
             messageModalCloseButton: document.getElementById('messageModalCloseButton'),
-            authStatus: document.getElementById('authStatus'), // Google Auth durumu
-            signOutButton: document.getElementById('signOutButton'), // Çıkış butonu
-            saveToDriveButton: document.getElementById('saveToDriveButton'), // Kaydet butonu
-            loadFromDriveButton: document.getElementById('loadFromDriveButton'), // Yükle butonu
+            authStatus: document.getElementById('authStatus'),
+            signOutButton: document.getElementById('signOutButton'),
+            saveToDriveButton: document.getElementById('saveToDriveButton'),
+            loadFromDriveButton: document.getElementById('loadFromDriveButton'),
         };
 
-        // --- Uygulama Durumu (State) ---
         let state = {
             xp: 0,
             history: {},
-            tasks: {}, // Tamamlanan görevlerin ID'lerini tutar
-            stats: { ...INITIAL_STATS }, // Bu aydaki yetenek ilerlemesini tutar
-            customTasks: [], // Kullanıcı tarafından eklenen görevler
-            lastCompletionDate: null, // Seri takibi için son tamamlama tarihi (ISO formatında)
-            streak: 0, // Günlük seri sayısı
-            lastStatResetMonth: null // Son stat sıfırlama ayını tutar (YYYY-MM formatında)
+            tasks: {},
+            stats: { ...INITIAL_STATS },
+            customTasks: [],
+            lastCompletionDate: null,
+            streak: 0,
+            lastStatResetMonth: null
         };
 
-        // --- Google API ve Kimlik Doğrulama ---
-        let googleUser; // Google kimlik doğrulama objesi
+        let googleUser;
 
-        // Google Sign-In tamamlandığında çağrılır
         function handleCredentialResponse(response) {
-            // Kimlik doğrulama başarılı olduğunda burası çalışır
             const idToken = response.credential;
-            // Burada idToken'ı kullanarak kullanıcı bilgilerini alabiliriz,
-            // ancak Drive API için sadece kimlik doğrulama yeterli.
             console.log("Google Sign-In Başarılı.");
-            elements.authStatus.textContent = "Google Drive'a bağlanılıyor..."; // Bağlanma durumu güncellendi
-            elements.signOutButton.classList.remove('hidden'); // Çıkış butonunu göster
-             // Kaydet ve Yükle butonları hala devre dışı kalmalı, API hazır olunca etkinleşecek
+            elements.authStatus.textContent = "Google Drive'a bağlanılıyor...";
+            elements.signOutButton.classList.remove('hidden');
 
-            // Google API istemcisini başlat
             gapi.load('client', initializeGapiClient);
         }
 
-        // Google API istemcisini başlat
         async function initializeGapiClient() {
              try {
                  console.log("gapi.client.init başlatılıyor...");
-                 // Client ID'niz ve Scope'unuz burada
                  await gapi.client.init({
                     clientId: '755451034699-ir2d9cjv9ngsckqd14np3citeqnmlrjs.apps.googleusercontent.com',
-                    scope: 'https://www.googleapis.com/auth/drive.appdata' // Uygulama verileri için scope
+                    scope: 'https://www.googleapis.com/auth/drive.appdata'
                  });
                  console.log("gapi.client.init tamamlandı.");
 
-                 // API'nin yüklendiğinden ve Drive hizmetinin erişilebilir olduğundan emin ol
                  if (gapi.client && gapi.client.drive) {
                       console.log("Google Drive API yüklendi ve erişilebilir.");
-                      elements.authStatus.textContent = "Google Drive'a bağlı."; // Bağlantı başarılı mesajı
-                      // API hazır olduğunda Kaydet ve Yükle butonlarını etkinleştir
+                      isGoogleDriveConnected = true;
+                      elements.authStatus.textContent = "Google Drive'a bağlı.";
                       elements.saveToDriveButton.disabled = false;
                       elements.loadFromDriveButton.disabled = false;
 
-                      // Kullanıcı oturum açtıysa Drive dosyasını ara
                       findOrCreateDriveFile();
                  } else {
                      console.error("Google Drive API yüklenemedi veya erişilebilir değil.");
-                     elements.authStatus.textContent = "Google Drive bağlantısı başarısız."; // Bağlantı hatası mesajı
-                     showMessage("Hata", "Google Drive API yüklenemedi. Lütfen tarayıcı konsolunu kontrol edin.");
+                     isGoogleDriveConnected = false;
+                     elements.authStatus.textContent = "Google Drive bağlantısı başarısız. Yerel depolama kullanılıyor.";
+                     showMessage("Uyarı", "Google Drive API yüklenemedi. Veriler yerel olarak kaydedilecek.");
+                     elements.saveToDriveButton.disabled = true;
+                     elements.loadFromDriveButton.disabled = true;
                  }
 
              } catch (error) {
                  console.error("Google API istemcisi başlatılırken hata:", error);
-                 elements.authStatus.textContent = "Google Drive bağlantısı başarısız."; // Bağlantı hatası mesajı
-                 // Eğer init sırasında yetkilendirme hatası olursa (izin verilmedi gibi),
-                 // burada yakalanabilir ve kullanıcıya bilgi verilebilir.
+                 isGoogleDriveConnected = false;
+                 elements.authStatus.textContent = "Google Drive bağlantısı başarısız. Yerel depolama kullanılıyor.";
                  if (error.result && error.result.error && error.result.error.code === 401) {
-                     showMessage("Yetkilendirme Gerekli", "Google Drive'a erişmek için yetkilendirme izni vermeniz gerekiyor.");
+                     showMessage("Yetkilendirme Gerekli", "Google Drive'a erişmek için yetkilendirme izni vermeniz gerekiyor. İzin verilmezse veriler yerel olarak kaydedilir.");
                  } else {
-                     showMessage("Hata", "Google API başlatılırken bir sorun oluştu. Lütfen tekrar deneyin veya tarayıcı konsolunu kontrol edin.");
+                     showMessage("Hata", "Google API başlatılırken bir sorun oluştu. Veriler yerel olarak kaydedilecek.");
                  }
-                 // Hata durumunda butonları devre dışı bırak
                  elements.saveToDriveButton.disabled = true;
                  elements.loadFromDriveButton.disabled = true;
              }
         }
 
-        // Çıkış yap butonu handler'ı
         function handleSignOut() {
-            // GIS'in oturumu kapatma fonksiyonunu kullan
-            google.accounts.id.disableAutoSelect(); // Otomatik giriş özelliğini devre dışı bırak
-            // googleUser objesi GIS ile doğrudan kullanılmayabilir,
-            // GIS'in kendi çıkış mekanizması kullanılır.
-            // GIS ile çıkış genellikle sadece çerezleri temizler,
-            // uygulamanın durumunu sıfırlamak gerekebilir.
+            google.accounts.id.disableAutoSelect();
 
             console.log('Oturum kapatıldı (GIS).');
-            elements.authStatus.textContent = "Google Drive bağlantısı kesildi.";
-            elements.signOutButton.classList.add('hidden'); // Çıkış butonunu gizle
-            // Kaydet ve Yükle butonlarını devre dışı bırak
+            elements.authStatus.textContent = "Google Drive bağlantısı kesildi. Yerel depolama kullanılıyor.";
+            elements.signOutButton.classList.add('hidden');
             elements.saveToDriveButton.disabled = true;
             elements.loadFromDriveButton.disabled = true;
-            driveFileId = null; // Dosya ID'sini sıfırla
-
-            // İsteğe bağlı: Uygulama durumunu sıfırlamak isterseniz
-            // resetAppState(); // Uygulama durumunu sıfırlayan bir fonksiyon çağırabilirsiniz
+            driveFileId = null;
+            isGoogleDriveConnected = false;
+            showMessage("Bilgi", "Google hesabınızdan çıkış yapıldı. Veriler artık yerel olarak kaydediliyor.");
         }
 
-        // Google API hazır olduğunda çağrılır (bu fonksiyon gapi.js yüklendiğinde otomatik çağrılır)
         function gapiLoaded() {
             console.log("Google API (gapi.js) yüklendi.");
-            // gapi.client modülünü yükle
-            // gapi.load('client', initializeGapiClient); // Bu çağrı handleCredentialResponse içinde yapılıyor
         }
 
-        // Google Identity Services (GIS) yüklendiğinde çağrılır (bu fonksiyon gsi/client.js yüklendiğinde otomatik çağrılır)
         function gisLoaded() {
             console.log("Google Identity Services (GIS) yüklendi.");
-             // GIS otomatik olarak data-callback ile handleCredentialResponse'u çağıracaktır.
-             // Ek GIS konfigürasyonu burada yapılabilir.
         }
 
 
-        // --- Google Drive İşlemleri ---
-
-        // Drive'daki kaydedilmiş dosyayı arar veya oluşturur
         async function findOrCreateDriveFile() {
-            if (!gapi.client || !gapi.client.drive) {
-                 console.error("findOrCreateDriveFile: Google Drive API hazır değil.");
+            if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive) {
+                 console.log("Drive bağlantısı yok, dosya aranmıyor/oluşturulmuyor.");
                  return;
             }
             console.log("Drive dosyası aranıyor veya oluşturuluyor...");
             try {
-                // Uygulama verileri klasöründe dosyayı ara
                 const response = await gapi.client.drive.files.list({
                     q: `name='${DRIVE_FILE_NAME}' and 'appDataFolder' in parents`,
                     spaces: 'appDataFolder',
@@ -500,40 +455,38 @@
 
                 const files = response.result.files;
                 if (files && files.length > 0) {
-                    // Dosya bulundu
                     driveFileId = files[0].id;
                     console.log("Drive dosyası bulundu:", driveFileId);
                      showMessage("Bilgi", "Google Drive'da kaydedilmiş veri bulundu.");
                 } else {
-                    // Dosya bulunamadı, yeni dosya oluştur
                     console.log("Drive dosyası bulunamadı, oluşturuluyor...");
-                    await createInitialDriveFile(); // Boş veya başlangıç verisiyle dosya oluştur
+                    await createInitialDriveFile();
                     showMessage("Bilgi", "Google Drive'da yeni bir kayıt dosyası oluşturuldu.");
                 }
             } catch (error) {
                 console.error("Drive dosyası aranırken/oluşturulurken hata:", error);
-                // Hata durumunda butonları devre dışı bırakmak mantıklı olabilir
+                isGoogleDriveConnected = false;
+                elements.authStatus.textContent = "Google Drive dosyasına erişilemedi. Yerel depolama kullanılıyor.";
                 elements.saveToDriveButton.disabled = true;
                 elements.loadFromDriveButton.disabled = true;
-                showMessage("Hata", "Google Drive dosyasına erişilemedi veya oluşturulamadı. Lütfen tekrar deneyin veya konsolu kontrol edin.");
+                showMessage("Hata", "Google Drive dosyasına erişilemedi veya oluşturulamadı. Lütfen tekrar deneyin veya konsolu kontrol edin. Veriler yerel olarak kaydedilecek.");
             }
         }
 
-        // Başlangıç (boş) Drive dosyası oluşturur
         async function createInitialDriveFile() {
-             if (!gapi.client || !gapi.client.drive) {
-                 console.error("createInitialDriveFile: Google Drive API hazır değil.");
-                 throw new Error("Drive API not ready"); // Hatanın yayılmasını sağla
+             if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive) {
+                 console.error("createInitialDriveFile: Drive bağlantısı yok.");
+                 throw new Error("Drive not connected");
             }
              console.log("Başlangıç Drive dosyası oluşturuluyor...");
              try {
                 const fileMetadata = {
                     'name': DRIVE_FILE_NAME,
-                    'parents': ['appDataFolder'] // Uygulama verileri klasörüne kaydet
+                    'parents': ['appDataFolder']
                 };
                 const media = {
                     mimeType: 'application/json',
-                    body: JSON.stringify({}) // Boş JSON objesi ile başla
+                    body: JSON.stringify({})
                 };
                 const response = await gapi.client.drive.files.create({
                     resource: fileMetadata,
@@ -544,24 +497,28 @@
                 console.log("Başlangıç Drive dosyası oluşturuldu:", driveFileId);
             } catch (error) {
                 console.error("Başlangıç Drive dosyası oluşturulurken hata:", error);
-                showMessage("Hata", "Google Drive'da başlangıç dosyası oluşturulamadı.");
-                throw error; // Hatanın yayılmasını sağla
+                isGoogleDriveConnected = false;
+                elements.authStatus.textContent = "Google Drive dosyası oluşturulamadı. Yerel depolama kullanılıyor.";
+                elements.saveToDriveButton.disabled = true;
+                elements.loadFromDriveButton.disabled = true;
+                showMessage("Hata", "Google Drive'da başlangıç dosyası oluşturulamadı. Veriler yerel olarak kaydedilecek.");
+                throw error;
             }
         }
 
 
-        // Mevcut durumu Google Drive'a kaydeder
         async function saveToDrive() {
-             if (!gapi.client || !gapi.client.drive || !driveFileId) {
-                 showMessage("Hata", "Google Drive API hazır değil veya dosya ID'si bulunamadı.");
+             if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive || !driveFileId) {
+                 showMessage("Uyarı", "Google Drive bağlantısı yok veya dosya ID'si bulunamadı. Veriler yerel depolamaya kaydediliyor.");
+                 saveStateLocal(); // Drive bağlantısı yoksa yerel kaydet
                  return;
              }
              console.log("Durum Drive'a kaydediliyor...");
              try {
-                 const fileContent = JSON.stringify(state); // Uygulama durumunu JSON stringine çevir
+                 const fileContent = JSON.stringify(state);
                  const response = await gapi.client.request({
                     path: '/upload/drive/v3/files/' + driveFileId,
-                    method: 'PATCH', // Dosyayı güncellemek için PATCH kullanılır
+                    method: 'PATCH',
                     params: {
                         uploadType: 'media'
                     },
@@ -574,60 +531,139 @@
                  showMessage("Başarılı", "Veriler Google Drive'a başarıyla kaydedildi.");
              } catch (error) {
                  console.error("Durum Drive'a kaydedilirken hata:", error);
-                 showMessage("Hata", "Veriler Google Drive'a kaydedilemedi. Lütfen tekrar deneyin.");
+                 isGoogleDriveConnected = false;
+                 elements.authStatus.textContent = "Google Drive'a kaydedilemedi. Yerel depolama kullanılıyor.";
+                 elements.saveToDriveButton.disabled = true;
+                 elements.loadFromDriveButton.disabled = true;
+                 showMessage("Hata", "Veriler Google Drive'a kaydedilemedi. Lütfen tekrar deneyin. Veriler yerel olarak kaydedilecek.");
+                 saveStateLocal(); // Drive kaydı başarısız olursa yerel kaydet
              }
         }
 
-        // Google Drive'dan durumu yükler
         async function loadFromDrive() {
-            if (!gapi.client || !gapi.client.drive || !driveFileId) {
-                 showMessage("Hata", "Google Drive API hazır değil veya dosya ID'si bulunamadı.");
+            if (!isGoogleDriveConnected || !gapi.client || !gapi.client.drive || !driveFileId) {
+                 showMessage("Uyarı", "Google Drive bağlantısı yok veya dosya ID'si bulunamadı. Yerel depolamadan yükleniyor.");
+                 loadStateLocal(); // Drive bağlantısı yoksa yerel yükle
                  return;
              }
              console.log("Durum Drive'dan yükleniyor...");
              try {
                  const response = await gapi.client.drive.files.get({
                     fileId: driveFileId,
-                    alt: 'media' // Dosya içeriğini almak için 'media' kullanılır
+                    alt: 'media'
                  });
 
-                 const loadedState = response.result; // Yüklenen veri (JSON objesi olarak gelir)
+                 const loadedState = response.result;
 
-                 // Yüklenen veriyi uygulama durumuna uygula
-                 // Yüklenen verinin yapısını kontrol etmek iyi bir pratiktir.
                  if (loadedState && typeof loadedState === 'object') {
-                     // Mevcut state objesi üzerine yüklenen veriyi yayarak uygula
-                     // Bu, yeni eklenen anahtarların da yüklenmesini sağlar.
                      state = { ...state, ...loadedState };
-                     saveState(); // Yüklenen durumu localStorage'a da kaydet
-                     renderAll(); // UI'ı yüklenen durumla yeniden çiz
+                     saveStateLocal();
+                     renderAll();
                      console.log("Durum Drive'dan yüklendi:", state);
                      showMessage("Başarılı", "Veriler Google Drive'dan başarıyla yüklendi.");
                  } else {
                      console.error("Yüklenen veri formatı hatalı:", loadedState);
-                     showMessage("Hata", "Google Drive'dan yüklenen veri formatı geçerli değil.");
+                     showMessage("Hata", "Google Drive'dan yüklenen veri formatı geçerli değil. Yerel depolamadan yükleniyor.");
+                     loadStateLocal(); // Drive verisi hatalıysa yerel yükle
                  }
 
              } catch (error) {
                  console.error("Durum Drive'dan yüklenirken hata:", error);
-                 showMessage("Hata", "Veriler Google Drive'dan yüklenemedi veya dosya boş/bozuk. Lütfen tekrar deneyin.");
+                 isGoogleDriveConnected = false;
+                 elements.authStatus.textContent = "Google Drive'dan yüklenemedi. Yerel depolama kullanılıyor.";
+                 elements.saveToDriveButton.disabled = true;
+                 elements.loadFromDriveButton.disabled = true;
+                 showMessage("Hata", "Veriler Google Drive'dan yüklenemedi veya dosya boş/bozuk. Lütfen tekrar deneyin. Veriler yerel olarak kaydedilecek.");
+                 loadStateLocal(); // Drive yükleme başarısız olursa yerel yükle
              }
         }
 
+        function loadStateLocal() {
+            console.log("Yerel depolamadan durum yükleniyor...");
+            state.xp = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.xp) || '0', 10);
+            state.history = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.history) || '{}');
+            state.tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.tasks) || '{}');
+            const savedStats = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.stats) || '{}');
+            state.stats = { ...INITIAL_STATS, ...savedStats };
+            state.customTasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.customTasks) || '[]');
+            state.lastCompletionDate = localStorage.getItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
+            state.streak = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.streak) || '0', 10);
+            state.lastStatResetMonth = localStorage.getItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
 
-        // --- Chart.js Kurulumu ---
+            const currentMonthKey = getCurrentMonthKey();
+            if (state.lastStatResetMonth !== currentMonthKey) {
+                console.log(`Yeni ay (${currentMonthKey}) algılandı. Yetenekler sıfırlanıyor.`);
+                state.stats = { ...INITIAL_STATS };
+                state.lastStatResetMonth = currentMonthKey;
+                saveStateLocal();
+                showNotification("Yeni Ay Başlangıcı!", "Bu ayki yetenek puanlarınız sıfırlandı.");
+            }
+
+             if (state.lastCompletionDate) {
+                const lastDate = new Date(state.lastCompletionDate);
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                lastDate.setHours(0,0,0,0);
+                yesterday.setHours(0,0,0,0);
+                if (lastDate < yesterday) {
+                    state.streak = 0;
+                    state.lastCompletionDate = null;
+                    saveStateLocal();
+                }
+            }
+             console.log("Yerel depolamadan durum yüklendi.");
+        }
+
+        function saveStateLocal() {
+            console.log("Durum yerel depolamaya kaydediliyor...");
+            localStorage.setItem(LOCAL_STORAGE_KEYS.xp, state.xp.toString());
+            localStorage.setItem(LOCAL_STORAGE_KEYS.history, JSON.stringify(state.history));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.tasks, JSON.stringify(state.tasks));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.stats, JSON.stringify(state.stats));
+            localStorage.setItem(LOCAL_STORAGE_KEYS.customTasks, JSON.stringify(state.customTasks));
+            if (state.lastCompletionDate) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.lastCompletionDate, state.lastCompletionDate);
+            } else {
+                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
+            }
+            localStorage.setItem(LOCAL_STORAGE_KEYS.streak, state.streak.toString());
+            if (state.lastStatResetMonth) {
+                localStorage.setItem(LOCAL_STORAGE_KEYS.lastStatResetMonth, state.lastStatResetMonth);
+            } else {
+                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
+            }
+             console.log("Durum yerel depolamaya kaydedildi.");
+        }
+
+        function saveState() {
+            if (isGoogleDriveConnected && driveFileId) {
+                saveToDrive();
+            } else {
+                saveStateLocal();
+            }
+        }
+
+        async function loadState() {
+            if (isGoogleDriveConnected && driveFileId) {
+                 await loadFromDrive();
+            } else {
+                loadStateLocal();
+            }
+        }
+
+
         let activityChart;
         function initializeChart() {
-             if (activityChart) activityChart.destroy(); // Eğer grafik zaten varsa yok et
+             if (activityChart) activityChart.destroy();
              const ctx = elements.chartCanvas.getContext('2d');
              activityChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: [], // Tarihler burada olacak
+                    labels: [],
                     datasets: [
                         {
                             label: 'Fiziksel Görev',
-                            data: [], // Fiziksel görev sayıları
+                            data: [],
                             backgroundColor: tailwind.config.theme.extend.colors['rpg-physical'],
                             borderColor: tailwind.config.theme.extend.colors['rpg-accent'],
                             borderWidth: 1,
@@ -635,9 +671,9 @@
                         },
                         {
                             label: 'Zihinsel Görev',
-                            data: [], // Zihinsel görev sayıları
+                            data: [],
                             backgroundColor: tailwind.config.theme.extend.colors['rpg-mental'],
-                            borderColor: 'rgba(0, 206, 209, 1)', // Zihinsel için belirgin bir renk
+                            borderColor: 'rgba(0, 206, 209, 1)',
                             borderWidth: 1,
                             borderRadius: 5,
                         }
@@ -645,14 +681,12 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Konteyner boyutuna uyum sağlar
+                    maintainAspectRatio: false,
                     scales: {
                         y: {
                             beginAtZero: true,
-                            // stepSize: 1 kaldırıldı, çünkü artık yüzde gösteriliyor
                             ticks: {
                                 color: tailwind.config.theme.extend.colors['rpg-subtext'],
-                                // Y ekseninde yüzde işaretini göster
                                 callback: function(value) {
                                     return value + '%';
                                 }
@@ -661,12 +695,12 @@
                         },
                         x: {
                             ticks: { color: tailwind.config.theme.extend.colors['rpg-subtext'] },
-                            grid: { display: false } // X ekseni grid çizgilerini gizle
+                            grid: { display: false }
                         }
                     },
                     plugins: {
                         legend: {
-                            position: 'top', // Legend üstte
+                            position: 'top',
                             labels: {
                                 color: tailwind.config.theme.extend.colors['rpg-text'],
                                 boxWidth: 12,
@@ -681,7 +715,7 @@
                                 label: function(context) {
                                     let label = context.dataset.label || '';
                                     if (label) label += ': ';
-                                    if (context.parsed.y !== null) label += context.parsed.y + '%'; // Görev sayısı yerine yüzde göster
+                                    if (context.parsed.y !== null) label += context.parsed.y + '%';
                                     return label;
                                 }
                             }
@@ -691,90 +725,26 @@
              });
         }
 
-        // --- Yardımcı Fonksiyonlar ---
-        const todayKey = () => new Date().toLocaleDateString('tr-TR'); // DD.MM.YYYY formatında
-        const todayIsoDate = () => new Date().toISOString().split('T')[0]; //YYYY-MM-DD formatında
+        const todayKey = () => new Date().toLocaleDateString('tr-TR');
+        const todayIsoDate = () => new Date().toISOString().split('T')[0];
 
-        // Mevcut ayı YYYY-MM formatında alır
         const getCurrentMonthKey = () => {
             const now = new Date();
             const year = now.getFullYear();
-            const month = (now.getMonth() + 1).toString().padStart(2, '0'); // Ay 0'dan başlar, +1 ekle ve 2 haneli yap
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
             return `${year}-${month}`;
         };
 
-        // Bir stat için varsayılan görev sayısını hesaplar
         function getTaskCountForStat(statKey) {
             const allTasks = getAllTasks();
             return allTasks.filter(task => task.stat === statKey).length;
         }
 
-        // Bir görev türü (fiziksel/zihinsel) için toplam görev sayısını hesaplar
         function getTotalTasksByType(type) {
              const allTasks = getAllTasks();
              return allTasks.filter(task => task.type === type).length;
         }
 
-
-        function loadState() {
-            state.xp = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.xp) || '0', 10);
-            state.history = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.history) || '{}');
-            state.tasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.tasks) || '{}');
-            const savedStats = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.stats) || '{}');
-            // Kayıtlı statları varsayılanlarla birleştir (artık başlangıç 0)
-            state.stats = { ...INITIAL_STATS, ...savedStats };
-            state.customTasks = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.customTasks) || '[]');
-            state.lastCompletionDate = localStorage.getItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
-            state.streak = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.streak) || '0', 10);
-            state.lastStatResetMonth = localStorage.getItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
-
-            // Aylık Stat Sıfırlama Kontrolü
-            const currentMonthKey = getCurrentMonthKey();
-            if (state.lastStatResetMonth !== currentMonthKey) {
-                console.log(`Yeni ay (${currentMonthKey}) algılandı. Yetenekler sıfırlanıyor.`);
-                state.stats = { ...INITIAL_STATS }; // Yetenekleri başlangıç değerlerine (0) sıfırla
-                state.lastStatResetMonth = currentMonthKey; // Son sıfırlama ayını güncelle
-                // Sıfırlanmış durumu hemen kaydet
-                saveState();
-                // Kullanıcıya bilgi ver (isteğe bağlı)
-                 showNotification("Yeni Ay Başlangıcı!", "Bu ayki yetenek puanlarınız sıfırlandı.");
-            }
-
-
-             // Seri kontrolü (öncekiyle aynı)
-             if (state.lastCompletionDate) {
-                const lastDate = new Date(state.lastCompletionDate);
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                lastDate.setHours(0,0,0,0);
-                yesterday.setHours(0,0,0,0);
-                if (lastDate < yesterday) {
-                    state.streak = 0;
-                    state.lastCompletionDate = null;
-                    saveState(); // Sıfırlanmış seriyi kaydet
-                }
-            }
-        }
-
-        function saveState() {
-            localStorage.setItem(LOCAL_STORAGE_KEYS.xp, state.xp.toString());
-            localStorage.setItem(LOCAL_STORAGE_KEYS.history, JSON.stringify(state.history));
-            localStorage.setItem(LOCAL_STORAGE_KEYS.tasks, JSON.stringify(state.tasks));
-            localStorage.setItem(LOCAL_STORAGE_KEYS.stats, JSON.stringify(state.stats));
-            localStorage.setItem(LOCAL_STORAGE_KEYS.customTasks, JSON.stringify(state.customTasks));
-            if (state.lastCompletionDate) {
-                localStorage.setItem(LOCAL_STORAGE_KEYS.lastCompletionDate, state.lastCompletionDate);
-            } else {
-                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
-            }
-            localStorage.setItem(LOCAL_STORAGE_KEYS.streak, state.streak.toString());
-            // Son sıfırlama ayını kaydet
-            if (state.lastStatResetMonth) {
-                localStorage.setItem(LOCAL_STORAGE_KEYS.lastStatResetMonth, state.lastStatResetMonth);
-            } else {
-                 localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
-            }
-        }
 
         function calculateLevelInfo() {
             let currentLevel = 1;
@@ -792,7 +762,7 @@
             }
 
             const totalXpNeededForNext = xpForNextLevel - (currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel-1] : 0);
-            const progressPercentage = (xpForNextLevel === Infinity) ? 100 : Math.min(100, (xpProgressInLevel / totalXpNeededForNext) * 100);
+            const percentage = (xpForNextLevel === Infinity) ? 100 : Math.min(100, (xpProgressInLevel / totalXpNeededForNext) * 100);
 
             return {
                 level: currentLevel,
@@ -806,8 +776,6 @@
         function getAllTasks() {
             return [...DEFAULT_TASKS, ...state.customTasks];
         }
-
-        // --- Render Fonksiyonları ---
 
         function renderTasks() {
              elements.physicalTasksContainer.innerHTML = '';
@@ -831,7 +799,6 @@
                  const isChecked = state.tasks[task.id] || false;
                  const labelClass = isChecked ? 'flex-1 cursor-pointer text-rpg-text line-through text-rpg-subtext' : 'flex-1 cursor-pointer text-rpg-text';
 
-                 // Stat bilgisini sadece kısaltma olarak göster
                  const statDisplay = task.stat ? task.stat.substring(0,3) + '.' : '';
 
                  taskElement.innerHTML = `
@@ -868,7 +835,6 @@
         function renderSummary() {
             const allTasks = getAllTasks();
             const totalTasks = allTasks.length;
-            // state.tasks objesindeki true değerleri sayarak tamamlanan görev sayısını bul
             const completedTasks = Object.values(state.tasks).filter(Boolean).length;
             elements.doneCount.textContent = `${completedTasks} / ${totalTasks}`;
 
@@ -889,7 +855,6 @@
                     const badgeSpan = document.createElement('span');
                     badgeSpan.className = 'text-3xl tooltip';
                     badgeSpan.textContent = badge.icon;
-                    // Rozet tooltip'ine rütbe/lakap bilgisini ekle
                     badgeSpan.dataset.tooltip = `${badge.rank}: ${badge.name} (${badge.xp} XP)`;
                     elements.badges.appendChild(badgeSpan);
                     earnedBadges++;
@@ -902,23 +867,19 @@
 
         function renderStats() {
             elements.statBars.innerHTML = '';
-            const allTasks = getAllTasks(); // Tüm görevleri al
+            const allTasks = getAllTasks();
 
-            // Stat başına görev sayısını hesapla
             const taskCountPerStat = {};
             for (const statKey in INITIAL_STATS) {
                 taskCountPerStat[statKey] = allTasks.filter(task => task.stat === statKey).length;
             }
 
-            // Yetenekleri alfabetik sıraya göre sıralayalım
             const sortedStats = Object.entries(state.stats).sort((a, b) => a[0].localeCompare(b[0]));
 
             for (const [key, value] of sortedStats) {
-                const numberOfTasks = taskCountPerStat[key] || 0; // Bu stat için görev sayısı
-                const monthlyMaxCompletions = numberOfTasks * 30; // Aylık maksimum tamamlama sayısı (30 gün üzerinden)
+                const numberOfTasks = taskCountPerStat[key] || 0;
+                const monthlyMaxCompletions = numberOfTasks * 30;
 
-                // Yüzde hesaplaması aylık maksimum tamamlama sayısına göre yapılır
-                // monthlyMaxCompletions 0 ise (o statta görev yoksa) yüzde 0 olur
                 const percentage = monthlyMaxCompletions > 0 ? (value / monthlyMaxCompletions) * 100 : 0;
 
                 const statDiv = document.createElement('div');
@@ -938,14 +899,12 @@
         function renderHistory() {
              elements.logTbody.innerHTML = '';
              const historyEntries = Object.entries(state.history);
-             // Tarihe göre azalan sıralama
              historyEntries.sort(([, a], [, b]) => new Date(b.date || 0) - new Date(a.date || 0));
 
              const chartLabels = [];
              const chartDataPhysical = [];
              const chartDataMental = [];
 
-             // Toplam fiziksel ve zihinsel görev sayısını hesapla (yüzde için payda)
              const totalPhysicalTasks = getTotalTasksByType('fiziksel');
              const totalMentalTasks = getTotalTasksByType('zihinsel');
 
@@ -954,17 +913,14 @@
                  elements.logTbody.innerHTML = `<tr class="border-b border-rpg-border"><td colspan="3" class="px-6 py-4 text-center text-rpg-subtext">Henüz kayıt yok.</td></tr>`;
              }
              else {
-                 // Son 30 günü grafikte göstermek için
                  const thirtyDaysAgo = new Date();
                  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
                  thirtyDaysAgo.setHours(0,0,0,0);
 
                  historyEntries.forEach(([dateStr, data]) => {
-                     // Tarih formatını (DD.MM.YYYY) Date objesine çevir
                      const dateParts = dateStr.split('.');
-                     // Dikkat: Ay 0-11 arasıdır, bu yüzden dateParts[1] - 1 yapıyoruz
                      const entryDate = new Date(dateParts[2], dateParts[1] - 1, dateParts[0]);
-                     entryDate.setHours(0,0,0,0); // Saat bilgisini sıfırla
+                     entryDate.setHours(0,0,0,0);
 
                      const row = document.createElement('tr');
                      row.className = 'border-b border-rpg-border';
@@ -975,19 +931,16 @@
                      `;
                      elements.logTbody.appendChild(row);
 
-                     // Son 30 gün içindeyse grafiğe ekle
                      if (entryDate >= thirtyDaysAgo) {
                          chartLabels.push(dateStr);
-                         // Fiziksel ve zihinsel görev sayılarını yüzdeye çevir
                          const physicalPercentage = totalPhysicalTasks > 0 ? (data.fiziksel / totalPhysicalTasks) * 100 : 0;
                          const mentalPercentage = totalMentalTasks > 0 ? (data.zihinsel / totalMentalTasks) * 100 : 0;
 
-                         chartDataPhysical.push(parseFloat(physicalPercentage.toFixed(1))); // Sayı olarak sakla, 1 ondalık basamak
-                         chartDataMental.push(parseFloat(mentalPercentage.toFixed(1))); // Sayı olarak sakla, 1 ondalık basamak
+                         chartDataPhysical.push(parseFloat(physicalPercentage.toFixed(1)));
+                         chartDataMental.push(parseFloat(mentalPercentage.toFixed(1)));
                      }
                  });
 
-                 // Grafiği güncellemeden önce verileri tarihe göre sırala (eskiden yeniye)
                  chartLabels.reverse();
                  chartDataPhysical.reverse();
                  chartDataMental.reverse();
@@ -1008,8 +961,6 @@
             renderHistory();
         }
 
-        // --- Olay Dinleyicileri ve Handler Fonksiyonları ---
-
         function handleTaskChange(event) {
             const checkbox = event.target;
             const taskElement = checkbox.closest('.task');
@@ -1025,82 +976,62 @@
             const statKey = taskData.stat;
             const isChecked = checkbox.checked;
 
-            // Görev durumunu güncelle
             state.tasks[taskId] = isChecked;
 
-            // XP ve Stat değişikliğini hesapla
             const xpChange = isChecked ? xpValue : -xpValue;
-            // Stat artışı her tamamlamada 1 birim olarak ayarlandı
             const statChange = isChecked ? 1 : -1;
 
-            // Seviye atlama kontrolü için önceki seviyeyi al
             const previousLevel = calculateLevelInfo().level;
 
-            // XP'yi güncelle (negatife düşmemesini sağla)
             state.xp += xpChange;
             if (state.xp < 0) state.xp = 0;
 
-            // Stat'ı güncelle (negatife düşmemesini sağla)
             if (state.stats[statKey] !== undefined) {
                 state.stats[statKey] += statChange;
                 if (state.stats[statKey] < 0) state.stats[statKey] = 0;
             }
 
-            // Günlük tamamlama geçmişini güncelle (Görev sayısı bazında)
-            const today = todayKey(); // DD.MM.YYYY formatında
-            const todayISO = todayIsoDate(); //YYYY-MM-DD formatında
+            const today = todayKey();
+            const todayISO = todayIsoDate();
 
             if (!state.history[today]) {
-                // Yeni gün kaydı oluştur
                 state.history[today] = {
-                    xp: 0, // Bu günlük toplam XP değil, sadece o günkü kayıt için tutuluyor olabilir veya kaldırılabilir
+                    xp: 0,
                     fiziksel: 0,
                     zihinsel: 0,
-                    date: new Date().toISOString() // ISO formatında tarih kaydı
+                    date: new Date().toISOString()
                 };
             }
 
-            // Günlük fiziksel ve zihinsel görev sayılarını yeniden hesapla
-            // Basit sayaç güncelleme yaklaşımı:
-            if (isChecked) { // Tamamlandıysa
+            if (isChecked) {
                 if (taskData.type === 'fiziksel') state.history[today].fiziksel++;
                 else if (taskData.type === 'zihinsel') state.history[today].zihinsel++;
-            } else { // İptal edildiyse
+            } else {
                 state.history[today].fiziksel = Math.max(0, state.history[today].fiziksel - (taskData.type === 'fiziksel' ? 1 : 0));
                 state.history[today].zihinsel = Math.max(0, state.history[today].zihinsel - (taskData.type === 'zihinsel' ? 1 : 0));
             }
 
 
-            // Seri sayacını güncelle
             if (isChecked) {
                 const yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
                 const yesterdayISO = yesterday.toISOString().split('T')[0];
 
-                // Eğer dün veya bugün zaten bir görev tamamlandıysa seriyi artır veya aynı tut
                 if (state.lastCompletionDate === todayISO) {
-                    // Zaten bugün tamamlanmış bir görev var, seri aynı kalır
                 } else if (state.lastCompletionDate === yesterdayISO) {
-                    // Dün tamamlanmış, bugün ilk görev tamamlandı, seri artar
                     state.streak++;
                     state.lastCompletionDate = todayISO;
                 } else {
-                    // Uzun bir aradan sonra veya ilk kez görev tamamlandı, seri 1 başlar
                     state.streak = 1;
                     state.lastCompletionDate = todayISO;
                 }
             }
-            // Not: Görev iptal edildiğinde seri bozulmaz, sadece yeni bir görev tamamlanmadığında bozulur.
-            // Seri bozulma kontrolü loadState içinde yapılıyor (dün veya bugün görev tamamlanmadıysa).
 
 
-            // Durumu kaydet
             saveState();
 
-            // UI'ı yeniden render et
             renderAll();
 
-            // Bildirim göster
             const currentLevel = calculateLevelInfo().level;
             if (currentLevel > previousLevel) {
                 showNotification(`Tebrikler! Seviye ${currentLevel}'e ulaştın! 🎉`);
@@ -1120,57 +1051,43 @@
             const type = form.taskType.value;
 
             if (!name || isNaN(xp) || xp <= 0 || !stat || !type) {
-                showMessage("Uyarı", "Lütfen tüm alanları doğru şekilde doldurun."); // alert yerine mesaj kutusu
+                showMessage("Uyarı", "Lütfen tüm alanları doğru şekilde doldurun.");
                 return;
             }
 
-            // Yeni göreve benzersiz bir ID ata
             const newTask = { id: `custom_${Date.now()}`, name: name, xp: xp, stat: stat, type: type };
 
-            // Yeni görevi customTasks listesine ekle
             state.customTasks.push(newTask);
 
-            // Durumu kaydet
             saveState();
 
-            // UI'ı yeniden render et
             renderAll();
 
-            // Formu sıfırla
             form.reset();
 
-            // Bildirim göster
             const statDisplay = stat ? stat.substring(0,3) + '.' : '';
             showNotification("Yeni Görev Eklendi!", `${name} (+${xp} XP, +1 ${statDisplay})`);
         }
 
         function handleDeleteTask(taskId) {
-             // Silme işlemi için onay modalını göster
              showConfirmationModal(
                  "Görevi Sil",
                  `"${state.customTasks.find(t => t.id === taskId)?.name}" görevini silmek istediğinizden emin misiniz?`,
                  () => {
-                     // Onaylandıysa görevi sil
                      state.customTasks = state.customTasks.filter(task => task.id !== taskId);
-                     // Tamamlanmış görevler listesinden de kaldır
                      delete state.tasks[taskId];
-                     // Durumu kaydet
                      saveState();
-                     // UI'ı yeniden render et
                      renderAll();
-                     // Bildirim göster
                      showNotification("Görev Silindi.");
                  }
              );
         }
 
         function handleResetRequest() {
-             // Sıfırlama işlemi için onay modalını göster
              showConfirmationModal(
                  "Tüm Verileri Sıfırla",
                  "Emin misin? Tüm ilerlemen ve görevlerin silinecek! Bu işlem geri alınamaz.",
                  () => {
-                     // Onaylandıysa tüm localStorage verilerini sil
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.xp);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.history);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.tasks);
@@ -1178,20 +1095,18 @@
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.customTasks);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.streak);
-                     localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth); // Yeni anahtarı da sil
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
 
-                     // Sayfayı yeniden yükle (uygulama sıfırlanmış state ile başlar)
                      location.reload();
                  }
              );
         }
 
-        // --- Modal Fonksiyonları ---
         let currentConfirmCallback = null;
         function showConfirmationModal(title, message, onConfirm) {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-message').textContent = message;
-            currentConfirmCallback = onConfirm; // Onay callback fonksiyonunu sakla
+            currentConfirmCallback = onConfirm;
             elements.confirmationModal.classList.remove('opacity-0', 'pointer-events-none');
             elements.confirmationModal.querySelector('.modal-content').classList.remove('scale-95');
             elements.confirmationModal.querySelector('.modal-content').classList.add('scale-100');
@@ -1200,14 +1115,12 @@
             elements.confirmationModal.querySelector('.modal-content').classList.remove('scale-100');
             elements.confirmationModal.querySelector('.modal-content').classList.add('scale-95');
             elements.confirmationModal.classList.add('opacity-0');
-            // Animasyon bitiminden sonra pointer-events'ı kapat
             setTimeout(() => {
                 elements.confirmationModal.classList.add('pointer-events-none');
-                currentConfirmCallback = null; // Callback'i temizle
+                currentConfirmCallback = null;
             }, 300);
         }
 
-        // Mesaj Kutusu gösterme fonksiyonu (alert yerine)
         function showMessage(title, message) {
              elements.messageModalTitle.textContent = title;
              elements.messageModalMessage.textContent = message;
@@ -1216,7 +1129,6 @@
              elements.messageModal.querySelector('.modal-content').classList.add('scale-100');
         }
 
-        // Mesaj Kutusu kapatma fonksiyonu
         function hideMessageModal() {
              elements.messageModal.querySelector('.modal-content').classList.remove('scale-100');
              elements.messageModal.querySelector('.modal-content').classList.add('scale-95');
@@ -1227,34 +1139,27 @@
         }
 
 
-        // Bildirim gösterme fonksiyonu (Tarayıcı bildirimlerini kullanır)
         function showNotification(title, body = '') {
-             // Tarayıcının bildirimleri destekleyip desteklemediğini kontrol et
              if (!('Notification' in window)) {
                  console.log("Tarayıcı bildirimleri desteklemiyor.");
                  return;
              }
 
-             // Eğer izin zaten verilmişse bildirimi göster
              if (Notification.permission === 'granted') {
-                 new Notification(title, { body: body, icon: './favicon.ico' }); // İkon eklenebilir
+                 new Notification(title, { body: body, icon: './favicon.ico' });
              }
-             // Eğer izin henüz verilmemişse veya reddedilmemişse, izin iste
              else if (Notification.permission !== 'denied') {
                  Notification.requestPermission().then(permission => {
-                     // Kullanıcı izni verirse bildirimi tekrar dene
                      if (permission === 'granted') {
-                         new Notification(title, { body: body, icon: './favicon.ico' }); // İkon eklenebilir
+                         new Notification(title, { body: body, icon: './favicon.ico' });
                      }
                  });
              }
-             // İzin reddedilmişse bir şey yapma
         }
 
 
-        // Yetenek seçeneklerini forma doldurur (INITIAL_STATS'tan alır)
         function populateStatOptions() {
-            elements.taskStatSelect.innerHTML = '<option value="">Seçiniz...</option>'; // Varsayılan seçenek
+            elements.taskStatSelect.innerHTML = '<option value="">Seçiniz...</option>';
             for (const statKey in INITIAL_STATS) {
                 const option = document.createElement('option');
                 option.value = statKey;
@@ -1264,46 +1169,47 @@
         }
 
 
-        // --- Başlangıç ---
-        function initializeApp() {
-            // Sayfa yüklendiğinde bildirim izni iste (eğer henüz sorulmadıysa)
+        async function initializeApp() {
             if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
                  Notification.requestPermission();
             }
 
-            loadState(); // Önce state yüklenir (ve aylık sıfırlama kontrolü yapılır)
-            initializeChart(); // Grafik başlatılır
-            populateStatOptions(); // Yeni görev ekleme formundaki yetenek seçenekleri doldurulur
+            // Uygulama başlangıcında önce yerel depolamadan yükle
+            loadStateLocal();
+            initializeChart();
+            populateStatOptions();
 
-            // Olay Dinleyicileri Tanımlanır
-            elements.addTaskForm.addEventListener('submit', handleAddTask); // Yeni görev ekleme formu submit edildiğinde
-            elements.resetButton.addEventListener('click', handleResetRequest); // Sıfırlama butonuna tıklandığında
-            elements.modalCancelButton.addEventListener('click', hideConfirmationModal); // Modal iptal butonuna tıklandığında
-            elements.modalConfirmButton.addEventListener('click', () => { // Modal onay butonuna tıklandığında
+            elements.addTaskForm.addEventListener('submit', handleAddTask);
+            elements.resetButton.addEventListener('click', handleResetRequest);
+            elements.modalCancelButton.addEventListener('click', hideConfirmationModal);
+            elements.modalConfirmButton.addEventListener('click', () => {
                 if (typeof currentConfirmCallback === 'function') {
-                    currentConfirmCallback(); // Saklanan onay callback'ini çalıştır
+                    currentConfirmCallback();
                 }
-                hideConfirmationModal(); // Modalı kapat
+                hideConfirmationModal();
             });
-             // Mesaj kutusu kapatma butonu
             elements.messageModalCloseButton.addEventListener('click', hideMessageModal);
 
-            // Google Drive buton olay dinleyicileri
             elements.saveToDriveButton.addEventListener('click', saveToDrive);
             elements.loadFromDriveButton.addEventListener('click', loadFromDrive);
             elements.signOutButton.addEventListener('click', handleSignOut);
 
+            renderAll();
 
-            renderAll(); // Tüm UI elementleri ilk kez render edilir (sıfırlanmış statlar dahil)
+            console.log("Süper Zinde RPG v4 Başlatıldı!");
 
-            console.log("Süper Zinde RPG v4 Başlatıldı!"); // Uygulama başlangıç mesajı
+            // Uygulama başlatıldıktan sonra Google API'yi yüklemeyi dene
+            // Bu, Google girişinin görünmesini ve Drive bağlantısının kurulmasını sağlar.
+            // Eğer kullanıcı giriş yaparsa veya zaten oturum açıksa,
+            // handleCredentialResponse -> initializeGapiClient akışı çalışır.
+            // Eğer bu akış başarılı olursa isGoogleDriveConnected true olur.
         }
 
-        // DOM yüklendiğinde uygulamayı başlat
         document.addEventListener('DOMContentLoaded', initializeApp);
 
         function gapiLoaded() {
             console.log("Google API (gapi.js) yüklendi.");
+             gapi.load('client', initializeGapiClient);
         }
 
         function gisLoaded() {
