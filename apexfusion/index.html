@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apex Fusion v1</title>
+    <title>Apex Fusion</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
@@ -106,7 +106,7 @@
 <body class="antialiased">
 
     <header class="bg-rpg-card py-4 px-6 text-center shadow-lg">
-        <h1 class="text-3xl font-bold text-rpg-accent tracking-wider">Apex Fusion v1</h1>
+        <h1 class="text-3xl font-bold text-rpg-accent tracking-wider">Apex Fusion</h1>
          <div id="auth-status" class="mt-2 text-sm text-rpg-subtext">
              <span id="user-email">Misafir</span>
              <button id="auth-button" class="btn btn-secondary btn-sm ml-2">Giriş Yap</button>
@@ -244,19 +244,25 @@
 
     <div id="welcomeModal" class="modal opacity-0 pointer-events-none" aria-hidden="true">
         <div class="modal-content transform scale-95 transition-transform duration-300 ease-out">
-            <h3 class="text-lg font-semibold text-rpg-accent mb-4">Apex Fusion v1'e Hoş Geldiniz, Maceraperest! 👋</h3>
+            <h3 class="text-lg font-semibold text-rpg-accent mb-4">Apex Fusion'e Hoş Geldiniz, Maceraperest! 👋</h3>
             <p class="text-sm text-rpg-subtext mb-6">
-                Burada, günlük görevlerinizi bir RPG yolculuğuna 🗺️ dönüştürerek hem fiziksel 💪 hem de zihinsel 🤔 potansiyelinizi keşfedeceksiniz. Apex Fusion v1 ile sadece yapılacaklar listesi tutmakla kalmaz, her tamamladığınız görevle deneyim puanı (XP) ✨ kazanır, seviye atlarsınız. ⬆️
+                Kendinizi geliştirme yolculuğunuzda bir üst seviyeye çıkmaya hazır mısınız? 🔥 Apex Fusion, günlük rutinlerinizi heyecan verici bir RPG deneyimine dönüştürerek hem fiziksel 💪 hem de zihinsel 🤔 potansiyelinizi en üst düzeye çıkarmanız için tasarlandı.
                 <br><br>
-                Fiziksel rutinleriniz 'Hareket' 🏃‍♀️, 'Sağlık' ❤️ gibi yeteneklerinizi geliştirirken, zihinsel egzersizleriniz 'Strateji' 🧠, 'Bilgi' 📚, 'Yaratıcılık' 🎨 gibi yeteneklerinizi yükseltir. Kazanılan her XP ve geliştirilen her yetenek, sizi bir sonraki seviyeye taşır ve özel rozetlerin 🏅 kilidini açmanızı sağlar.
+                Uygulamamızda, belirlediğiniz veya önerilen görevleri tamamlayarak deneyim puanları (XP) ✨ kazanacak, seviye atlayacak ⬆️ ve yeni yeteneklerin kilidini açacaksınız. Her görev, 'Strateji' 🧠, 'Bilgi' 📚, 'Yaratıcılık' 🎨, 'Hareket' 🏃‍♀️ ve 'Sağlık' ❤️ gibi farklı yetenek alanlarınızı güçlendirecek.
                 <br><br>
-                Kendi görevlerinizi ekleyebilir ✍️, ilerlemenizi detaylı grafiklerle 📊 takip edebilir ve günlük seriler 🔥 oluşturarak motivasyonunuzu yüksek tutabilirsiniz. Unutmayın, en büyük macera kendi potansiyelinizi açığa çıkarmaktır. Diamond! 💎
+                İlerlemenizi detaylı istatistikler 📊 ve grafiklerle takip edin, günlük tamamlama serileri 🔥 oluşturarak motivasyonunuzu canlı tutun ve kilometre taşlarına ulaştıkça özel rozetler 🏅 kazanın. Kendi kişisel gelişim yol haritanızı oluşturmak için görevlerinizi özelleştirin veya yenilerini ekleyin ✍️.
+                <br><br>
+                Apex Fusion, sadece bir görev takip uygulaması değil, kendi en iyi versiyonunuza ulaşmanız için bir araçtır. Unutmayın, her küçük adım büyük bir değişimin başlangıcıdır. Bu macerada size eşlik etmek için buradayız! Diamond! 💎
             </p>
             <div class="flex justify-end">
                 <button id="closeWelcomeModalButton" class="btn btn-primary">Başlayın! ▶️</button>
             </div>
         </div>
     </div>
+
+    <footer class="bg-rpg-card py-4 text-center text-rpg-subtext text-sm mt-8 border-t border-rpg-border">
+        © 2025 Yusuf Eden tarafından yapılmıştır.
+    </footer>
 
 
     <script>
@@ -270,10 +276,38 @@
             streak: 'rpg_streak_v4',
             lastStatResetMonth: 'rpg_lastStatResetMonth_v4',
             hasSeenWelcome: 'rpg_hasSeenWelcome_v1',
-            removedDefaultTasks: 'rpg_removedDefaultTasks_v1' // Yeni anahtar
+            removedDefaultTasks: 'rpg_removedDefaultTasks_v1'
         };
 
-        const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5000, 7500, 10000, 13000];
+        // Sabit XP eşiklerini kaldırıyoruz.
+        // const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5000, 7500, 10000, 13000];
+
+        // Seviye 1 için başlangıç XP'si
+        const BASE_XP_FOR_LEVEL_1 = 500;
+        // Seviye 2'den itibaren her seviye için XP artışının başlangıcı
+        const BASE_LEVEL_INCREMENT = 1000;
+        // Seviye artışının her seviyede ne kadar artacağı
+        const ADDITIONAL_INCREMENT_PER_LEVEL = 500;
+
+        /**
+         * Belirli bir seviyeye ulaşmak için gereken toplam XP'yi hesaplar.
+         * @param {number} level - Hesaplamak istenen seviye (1 ve üzeri).
+         * @returns {number} - O seviyeye ulaşmak için gereken toplam XP.
+         */
+        function getTotalXPForLevel(level) {
+            if (level < 1) return 0;
+            if (level === 1) return BASE_XP_FOR_LEVEL_1;
+
+            let totalXP = BASE_XP_FOR_LEVEL_1;
+            let currentIncrement = BASE_LEVEL_INCREMENT;
+
+            for (let i = 2; i <= level; i++) {
+                totalXP += currentIncrement;
+                currentIncrement += ADDITIONAL_INCREMENT_PER_LEVEL;
+            }
+            return totalXP;
+        }
+
 
         const BADGES = [
             { xp: 500, icon: '🥈', name: 'Yol Haritası Çizer', rank: 'Başlangıç' },
@@ -281,7 +315,7 @@
             { xp: 3000, icon: '💎', name: 'Potansiyel Geliştirici', rank: 'Ustalık' },
             { xp: 5000, icon: '🏆', name: 'Strateji Ustası Adayı', rank: 'Kahramanlık' },
             { xp: 7500, icon: '🌟', name: 'İçsel Usta', rank: 'Efsanevi' },
-            { xp: 13000, icon: '✨', name: 'Gerçeklik Simyacısı', rank: 'Gerçeklik' },
+            { xp: getTotalXPForLevel(6), icon: '✨', name: 'Gerçeklik Simyacısı', rank: 'Gerçeklik' }, // Rozet XP'sini dinamik hesapla
         ];
 
         const INITIAL_STATS = {
@@ -350,7 +384,7 @@
             lastCompletionDate: null,
             streak: 0,
             lastStatResetMonth: null,
-            removedDefaultTaskIds: [] // Yeni state değişkeni
+            removedDefaultTaskIds: []
         };
 
         let activityChart;
@@ -602,30 +636,35 @@
         }
 
 
-        function calculateLevelInfo() {
+        /**
+         * Mevcut XP'ye göre kullanıcının seviyesini ve bir sonraki seviye bilgilerini hesaplar.
+         * Dinamik XP eşiklerini kullanır.
+         * @param {number} currentXP - Kullanıcının mevcut XP'si.
+         * @returns {{level: number, xpForNext: number, progress: number, neededForNext: number, percentage: number}} - Seviye bilgileri.
+         */
+        function calculateLevelInfo(currentXP) {
             let currentLevel = 1;
-            let xpForNextLevel = LEVEL_THRESHOLDS[1];
-            let xpProgressInLevel = state.xp;
+            let xpForCurrentLevel = 0; // Mevcut seviyeye ulaşmak için gereken toplam XP
+            let xpForNextLevel = getTotalXPForLevel(1); // Bir sonraki seviyeye (Level 1) ulaşmak için gereken toplam XP
 
-            for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
-                if (state.xp >= LEVEL_THRESHOLDS[i]) {
-                    currentLevel = i + 1;
-                    xpForNextLevel = (i + 1 < LEVEL_THRESHOLDS.length) ? LEVEL_THRESHOLDS[i + 1] : Infinity;
-                    const xpRequiredForCurrentLevel = LEVEL_THRESHOLDS[i];
-                    xpProgressInLevel = state.xp - xpRequiredForCurrentLevel;
-                    break;
-                }
+            // Kullanıcının XP'sinin hangi seviyeye karşılık geldiğini bul
+            while (currentXP >= xpForNextLevel && currentLevel < 100) { // Maksimum seviye sınırı ekleyebiliriz
+                currentLevel++;
+                xpForCurrentLevel = xpForNextLevel;
+                xpForNextLevel = getTotalXPForLevel(currentLevel);
             }
 
-            const totalXpNeededForNext = xpForNextLevel - (currentLevel > 1 ? LEVEL_THRESHOLDS[currentLevel-1] : 0);
-            const progressPercentage = (xpForNextLevel === Infinity) ? 100 : Math.min(100, (xpProgressInLevel / totalXpNeededForNext) * 100);
+            const xpProgressInLevel = currentXP - xpForCurrentLevel;
+            const xpNeededForNext = xpForNextLevel - xpForCurrentLevel;
+            const progressPercentage = (xpNeededForNext > 0) ? (xpProgressInLevel / xpNeededForNext) * 100 : 100;
+
 
             return {
                 level: currentLevel,
-                xpForNext: xpForNextLevel,
-                progress: xpProgressInLevel,
-                neededForNext: xpForNextLevel === Infinity ? 0 : xpForNextLevel - state.xp,
-                percentage: progressPercentage
+                xpForNext: xpForNextLevel, // Bu aslında bir sonraki seviyeye ulaşmak için gereken TOPLAM XP
+                progress: xpProgressInLevel, // Mevcut seviyedeki ilerleme
+                neededForNext: xpNeededForNext, // Bir sonraki seviye için gereken EK XP
+                percentage: Math.min(100, progressPercentage) // Yüzde 100'ü geçmemeli
             };
         }
 
@@ -650,7 +689,8 @@
                  taskElement.dataset.type = task.type;
                  taskElement.dataset.id = task.id;
                  // Görevin varsayılan olup olmadığını işaretle
-                 taskElement.dataset.isDefault = DEFAULT_TASKS.some(dt => dt.id === task.id);
+                 const isDefault = DEFAULT_TASKS.some(dt => dt.id === task.id);
+                 taskElement.dataset.isDefault = isDefault;
 
 
                  const isChecked = state.tasks[task.id] || false;
@@ -695,11 +735,13 @@
             const completedTasks = Object.values(state.tasks).filter(Boolean).length;
             elements.doneCount.textContent = `${completedTasks} / ${totalTasks}`;
 
-            const levelInfo = calculateLevelInfo();
+            const levelInfo = calculateLevelInfo(state.xp); // calculateLevelInfo'ya state.xp'yi gönder
             elements.level.textContent = levelInfo.level;
             elements.xpCount.textContent = state.xp;
             elements.xpBar.style.width = `${levelInfo.percentage}%`;
-            elements.xpNextLevel.textContent = levelInfo.xpForNext === Infinity ? "Maksimum Seviye!" : `Sonraki seviye için: ${levelInfo.neededForNext} XP`;
+            // Bir sonraki seviye için gereken ek XP'yi göster
+            elements.xpNextLevel.textContent = levelInfo.neededForNext <= 0 ? "Maksimum Seviye!" : `Sonraki seviye için: ${levelInfo.neededForNext} XP`;
+
 
             elements.streakCount.innerHTML = `<i class="fas fa-fire ${state.streak > 0 ? 'text-rpg-streak' : 'text-rpg-subtext'}"></i> ${state.streak}`;
         }
@@ -735,8 +777,10 @@
 
             for (const [key, value] of sortedStats) {
                 const numberOfTasks = taskCountPerStat[key] || 0;
+                // Aylık maksimum tamamlama sayısı (varsayılan olarak 30 gün)
                 const monthlyMaxCompletions = numberOfTasks * 30;
 
+                // Yetenek puanının aylık maksimum tamamlama sayısına oranı
                 const percentage = monthlyMaxCompletions > 0 ? (value / monthlyMaxCompletions) * 100 : 0;
 
                 const statDiv = document.createElement('div');
@@ -838,7 +882,7 @@
             const xpChange = isChecked ? xpValue : -xpValue;
             const statChange = isChecked ? 1 : -1;
 
-            const previousLevel = calculateLevelInfo().level;
+            const previousLevel = calculateLevelInfo(state.xp).level; // calculateLevelInfo'ya state.xp'yi gönder
 
             state.xp += xpChange;
             if (state.xp < 0) state.xp = 0;
@@ -887,7 +931,7 @@
 
             renderAll();
 
-            const currentLevel = calculateLevelInfo().level;
+            const currentLevel = calculateLevelInfo(state.xp).level; // calculateLevelInfo'ya state.xp'yi gönder
             if (currentLevel > previousLevel) {
                 showNotification(`Tebrikler! Seviye ${currentLevel}'e ulaştın! 🎉`);
             } else {
@@ -934,7 +978,7 @@
 
              showConfirmationModal(
                  isDefault ? "Varsayılan Görevi Sil" : "Özel Görevi Sil",
-                 `"${taskName}" görevini silmek istediğinizden emin misiniz? ${isDefault ? "Bu varsayılan bir görevdir ve silindikten sonra tekrar eklemek için sıfırlama yapmanız gerekebilir." : ""}`,
+                 `"${taskName}" görevini silmek istediğinizden emin misiniz? ${isDefault ? "Bu varsayılan bir görevdir ve silindikten sonra tekrar eklemek için verileri sıfırlamanız gerekebilir." : ""}`,
                  async () => {
                      if (isDefault) {
                          // Varsayılan görevi kaldırılanlar listesine ekle
@@ -1135,7 +1179,7 @@
             // Auth durumu değiştiğinde loadState ve renderAll otomatik çağrılacak
             // İlk yüklemede onAuthStateChanged tetiklenir ve loadState'i çağırır.
 
-            console.log("Apex Fusion v1 Başlatıldı!");
+            console.log("Apex Fusion Başlatıldı!");
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
