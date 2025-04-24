@@ -242,6 +242,22 @@
         </div>
     </div>
 
+    <div id="welcomeModal" class="modal opacity-0 pointer-events-none" aria-hidden="true">
+        <div class="modal-content transform scale-95 transition-transform duration-300 ease-out">
+            <h3 class="text-lg font-semibold text-rpg-accent mb-4">Apex Fusion v1'e Hoş Geldiniz, Maceraperest! 👋</h3>
+            <p class="text-sm text-rpg-subtext mb-6">
+                Burada, günlük görevlerinizi bir RPG yolculuğuna 🗺️ dönüştürerek hem fiziksel 💪 hem de zihinsel 🤔 potansiyelinizi keşfedeceksiniz. Apex Fusion v1 ile sadece yapılacaklar listesi tutmakla kalmaz, her tamamladığınız görevle deneyim puanı (XP) ✨ kazanır, seviye atlarsınız. ⬆️
+                <br><br>
+                Fiziksel rutinleriniz 'Hareket' 🏃‍♀️, 'Sağlık' ❤️ gibi yeteneklerinizi geliştirirken, zihinsel egzersizleriniz 'Strateji' 🧠, 'Bilgi' 📚, 'Yaratıcılık' 🎨 gibi yeteneklerinizi yükseltir. Kazanılan her XP ve geliştirilen her yetenek, sizi bir sonraki seviyeye taşır ve özel rozetlerin 🏅 kilidini açmanızı sağlar.
+                <br><br>
+                Kendi görevlerinizi ekleyebilir ✍️, ilerlemenizi detaylı grafiklerle 📊 takip edebilir ve günlük seriler 🔥 oluşturarak motivasyonunuzu yüksek tutabilirsiniz. Unutmayın, en büyük macera kendi potansiyelinizi açığa çıkarmaktır. Diamond! 💎
+            </p>
+            <div class="flex justify-end">
+                <button id="closeWelcomeModalButton" class="btn btn-primary">Başlayın! ▶️</button>
+            </div>
+        </div>
+    </div>
+
 
     <script>
         const LOCAL_STORAGE_KEYS = {
@@ -252,7 +268,9 @@
             customTasks: 'rpg_customTasks_v4',
             lastCompletionDate: 'rpg_lastCompletionDate_v4',
             streak: 'rpg_streak_v4',
-            lastStatResetMonth: 'rpg_lastStatResetMonth_v4'
+            lastStatResetMonth: 'rpg_lastStatResetMonth_v4',
+            hasSeenWelcome: 'rpg_hasSeenWelcome_v1',
+            removedDefaultTasks: 'rpg_removedDefaultTasks_v1' // Yeni anahtar
         };
 
         const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5000, 7500, 10000, 13000];
@@ -277,6 +295,7 @@
             Beden: 0
         };
 
+        // Varsayılan görevler artık silinebilir olacak
         const DEFAULT_TASKS = [
             { id: 'z1', name: 'Sudoku Çöz (Orta/Zor)', xp: 20, stat: 'Strateji', type: 'zihinsel' },
             { id: 'z2', name: 'Satranç Bulmacası Çöz', xp: 20, stat: 'Strateji', type: 'zihinsel' },
@@ -316,7 +335,10 @@
             modalConfirmButton: document.getElementById('modalConfirmButton'),
             authStatus: document.getElementById('auth-status'),
             userEmail: document.getElementById('user-email'),
-            authButton: document.getElementById('auth-button')
+            authButton: document.getElementById('auth-button'),
+            // Welcome modal elementleri
+            welcomeModal: document.getElementById('welcomeModal'),
+            closeWelcomeModalButton: document.getElementById('closeWelcomeModalButton')
         };
 
         let state = {
@@ -327,7 +349,8 @@
             customTasks: [],
             lastCompletionDate: null,
             streak: 0,
-            lastStatResetMonth: null
+            lastStatResetMonth: null,
+            removedDefaultTaskIds: [] // Yeni state değişkeni
         };
 
         let activityChart;
@@ -423,16 +446,28 @@
              return allTasks.filter(task => task.type === type).length;
         }
 
+        // Varsayılan görevleri filtreleyerek tüm görevleri döndürür
+        function getAllTasks() {
+            const activeDefaultTasks = DEFAULT_TASKS.filter(task => !state.removedDefaultTaskIds.includes(task.id));
+            return [...activeDefaultTasks, ...state.customTasks];
+        }
+
         async function loadState(user) {
             const currentMonthKey = getCurrentMonthKey();
 
             if (user) {
+                // Kullanıcı giriş yapmışsa Firebase'den yükle
                 const userDocRef = db.collection('users').doc(user.uid);
                 try {
                     const doc = await userDocRef.get();
                     if (doc.exists) {
                         state = doc.data();
                         console.log("Firebase'den veri yüklendi.");
+
+                        // removedDefaultTaskIds yoksa boş array olarak başlat
+                        if (!state.removedDefaultTaskIds) {
+                            state.removedDefaultTaskIds = [];
+                        }
 
                         // Firebase'den yüklenen veride stat sıfırlama ayarı yoksa veya eskiyse sıfırla
                         if (state.lastStatResetMonth !== currentMonthKey) {
@@ -469,7 +504,8 @@
                             customTasks: [],
                             lastCompletionDate: null,
                             streak: 0,
-                            lastStatResetMonth: currentMonthKey // Yeni ay bilgisi ile başla
+                            lastStatResetMonth: currentMonthKey, // Yeni ay bilgisi ile başla
+                            removedDefaultTaskIds: [] // Yeni kullanıcı için boş başlat
                         };
                          await saveState(user); // Başlangıç durumunu Firebase'e kaydet
                          showNotification("Hoş Geldiniz!", "Yeni bir profil oluşturuldu.");
@@ -500,6 +536,9 @@
             state.lastCompletionDate = localStorage.getItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
             state.streak = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.streak) || '0', 10);
             state.lastStatResetMonth = localStorage.getItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
+            // removedDefaultTaskIds'ı yerel depolamadan yükle
+            state.removedDefaultTaskIds = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.removedDefaultTasks) || '[]');
+
 
             const currentMonthKey = getCurrentMonthKey();
             if (state.lastStatResetMonth !== currentMonthKey) {
@@ -558,6 +597,8 @@
             } else {
                  localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
             }
+            // removedDefaultTaskIds'ı yerel depolamaya kaydet
+            localStorage.setItem(LOCAL_STORAGE_KEYS.removedDefaultTasks, JSON.stringify(state.removedDefaultTaskIds));
         }
 
 
@@ -588,9 +629,7 @@
             };
         }
 
-        function getAllTasks() {
-            return [...DEFAULT_TASKS, ...state.customTasks];
-        }
+        // getAllTasks fonksiyonu yukarı taşındı ve güncellendi
 
         function renderTasks() {
              elements.physicalTasksContainer.innerHTML = '';
@@ -610,6 +649,9 @@
                  taskElement.dataset.stat = task.stat;
                  taskElement.dataset.type = task.type;
                  taskElement.dataset.id = task.id;
+                 // Görevin varsayılan olup olmadığını işaretle
+                 taskElement.dataset.isDefault = DEFAULT_TASKS.some(dt => dt.id === task.id);
+
 
                  const isChecked = state.tasks[task.id] || false;
                  const labelClass = isChecked ? 'flex-1 cursor-pointer text-rpg-text line-through text-rpg-subtext' : 'flex-1 cursor-pointer text-rpg-text';
@@ -620,16 +662,16 @@
                      <input type="checkbox" id="${task.id}" class="task-checkbox form-checkbox h-5 w-5 text-rpg-accent bg-gray-600 border-gray-500 rounded focus:ring-rpg-accent mr-3 cursor-pointer" ${isChecked ? 'checked' : ''}>
                      <label for="${task.id}" class="${labelClass}">${task.name}</label>
                      <span class="text-xs text-rpg-subtext ml-2">(+${task.xp} XP, +1 ${statDisplay})</span>
-                     ${state.customTasks.find(ct => ct.id === task.id) ? '<button class="delete-task-btn text-red-500 hover:text-red-400 text-xs ml-2 p-1" title="Görevi Sil"><i class="fas fa-times"></i></button>' : ''}
+                     <button class="delete-task-btn text-red-500 hover:text-red-400 text-xs ml-2 p-1" title="Görevi Sil"><i class="fas fa-times"></i></button>
                  `;
 
                  const checkbox = taskElement.querySelector('.task-checkbox');
                  checkbox.addEventListener('change', handleTaskChange);
 
                  const deleteButton = taskElement.querySelector('.delete-task-btn');
-                 if (deleteButton) {
-                     deleteButton.addEventListener('click', () => handleDeleteTask(task.id));
-                 }
+                 // Tüm görevlere silme butonu ekleniyor
+                 deleteButton.addEventListener('click', () => handleDeleteTask(task.id));
+
 
                  if (task.type === 'fiziksel') {
                      elements.physicalTasksContainer.appendChild(taskElement);
@@ -882,19 +924,38 @@
             showNotification("Yeni Görev Eklendi!", `${name} (+${xp} XP, +1 ${statDisplay})`);
         }
 
+        // Görev silme fonksiyonu güncellendi
         async function handleDeleteTask(taskId) {
+             const task = getAllTasks().find(t => t.id === taskId);
+             if (!task) return;
+
+             const isDefault = DEFAULT_TASKS.some(dt => dt.id === taskId);
+             const taskName = task.name;
+
              showConfirmationModal(
-                 "Görevi Sil",
-                 `"${state.customTasks.find(t => t.id === taskId)?.name}" görevini silmek istediğinizden emin misiniz?`,
+                 isDefault ? "Varsayılan Görevi Sil" : "Özel Görevi Sil",
+                 `"${taskName}" görevini silmek istediğinizden emin misiniz? ${isDefault ? "Bu varsayılan bir görevdir ve silindikten sonra tekrar eklemek için sıfırlama yapmanız gerekebilir." : ""}`,
                  async () => {
-                     state.customTasks = state.customTasks.filter(task => task.id !== taskId);
+                     if (isDefault) {
+                         // Varsayılan görevi kaldırılanlar listesine ekle
+                         if (!state.removedDefaultTaskIds.includes(taskId)) {
+                             state.removedDefaultTaskIds.push(taskId);
+                         }
+                     } else {
+                         // Özel görevi customTasks listesinden kaldır
+                         state.customTasks = state.customTasks.filter(t => t.id !== taskId);
+                     }
+
+                     // Tamamlanmış görevler listesinden kaldır (varsa)
                      delete state.tasks[taskId];
+
                      await saveState(auth.currentUser);
                      renderAll();
-                     showNotification("Görev Silindi.");
+                     showNotification("Görev Silindi.", `"${taskName}" görevi kaldırıldı.`);
                  }
              );
         }
+
 
         async function handleResetRequest() {
              showConfirmationModal(
@@ -921,6 +982,8 @@
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.streak);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.hasSeenWelcome);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.removedDefaultTasks); // Kaldırılan varsayılan görevleri de sil
 
                      location.reload();
                  }
@@ -945,6 +1008,24 @@
                 currentConfirmCallback = null;
             }, 300);
         }
+
+        // Welcome modalı gösterme fonksiyonu
+        function showWelcomeModal() {
+             elements.welcomeModal.classList.remove('opacity-0', 'pointer-events-none');
+             elements.welcomeModal.querySelector('.modal-content').classList.remove('scale-95');
+             elements.welcomeModal.querySelector('.modal-content').classList.add('scale-100');
+        }
+
+        // Welcome modalı gizleme fonksiyonu
+        function hideWelcomeModal() {
+             elements.welcomeModal.querySelector('.modal-content').classList.remove('scale-100');
+             elements.welcomeModal.querySelector('.modal-content').classList.add('scale-95');
+             elements.welcomeModal.classList.add('opacity-0');
+             setTimeout(() => {
+                 elements.welcomeModal.classList.add('pointer-events-none');
+             }, 300);
+        }
+
 
         function showNotification(title, body = '') {
              if (!('Notification' in window)) {
@@ -1006,13 +1087,22 @@
                 console.log("Kullanıcı giriş yaptı:", user.uid);
                 await loadState(user); // Firebase'den veriyi yükle
             } else {
-                // Kullanıcı çıkış yapmış veya hiç giriş yapmamış
+                // Kullanıcı çıkış yapmış veya hiç giriş yapmamış (Misafir)
                 elements.userEmail.textContent = 'Misafir';
                 elements.authButton.textContent = 'Google ile Giriş Yap';
                 elements.authButton.removeEventListener('click', signOut);
                 elements.authButton.addEventListener('click', signInWithGoogle);
                 console.log("Kullanıcı çıkış yaptı.");
                 await loadState(null); // Yerel depolamadan veriyi yükle
+
+                // Misafir ve ilk defa geliyorsa hoş geldin modalını göster
+                const hasSeenWelcome = localStorage.getItem(LOCAL_STORAGE_KEYS.hasSeenWelcome);
+                if (!hasSeenWelcome) {
+                    // Küçük bir gecikme ekleyerek sayfanın yüklenmesini bekle
+                    setTimeout(() => {
+                         showWelcomeModal();
+                    }, 500); // Gecikme süresini ayarlayabilirsiniz
+                }
             }
         });
 
@@ -1034,6 +1124,13 @@
                 }
                 hideConfirmationModal();
             });
+
+            // Welcome modal kapatma butonu dinleyicisi
+            elements.closeWelcomeModalButton.addEventListener('click', () => {
+                hideWelcomeModal();
+                localStorage.setItem(LOCAL_STORAGE_KEYS.hasSeenWelcome, 'true'); // Kullanıcının gördüğünü işaretle
+            });
+
 
             // Auth durumu değiştiğinde loadState ve renderAll otomatik çağrılacak
             // İlk yüklemede onAuthStateChanged tetiklenir ve loadState'i çağırır.
