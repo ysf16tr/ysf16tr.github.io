@@ -331,22 +331,15 @@
 
         // Varsayılan görevler artık silinebilir olacak
         const DEFAULT_TASKS = [
-            { id: 'z1', name: 'Sudoku Çöz (Orta/Zor)', xp: 20, stat: 'Strateji', type: 'zihinsel' },
-            { id: 'z2', name: 'Satranç Bulmacası Çöz', xp: 20, stat: 'Strateji', type: 'zihinsel' },
-            { id: 'z3', name: 'Strateji Analizi Yap', xp: 35, stat: 'Strateji', type: 'zihinsel' },
-            { id: 'z5', name: 'Bilgilendirici İçerik Tüket (15 dk)', xp: 15, stat: 'Bilgi', type: 'zihinsel' },
-            { id: 'z7', name: 'Kısa Araştırma Yap', xp: 20, stat: 'Bilgi', type: 'zihinsel' },
-            { id: 'z9', name: 'Objenin Yaratıcı Kullanım Alanlarını Düşün (En az 3)', xp: 20, stat: 'Yaratıcılık', type: 'zihinsel' },
-            { id: 'z10', name: 'İki Alakasız Kavramı Birleştirip Fikir Üret', xp: 25, stat: 'Yaratıcılık', type: 'zihinsel' },
-            { id: 'z12', name: 'Günlük Olay/Duygu Yansıtma Yaz', xp: 15, stat: 'Farkındalık', type: 'zihinsel' },
-            { id: 'z13', name: 'Yaptığın Bir Hatayı Analiz Et', xp: 20, stat: 'Farkındalık', type: 'zihinsel' },
-            { id: 'z14', name: 'Yeni Küçük Pratik Beceri Öğren/Pratik Yap (15-20 dk)', xp: 30, stat: 'Beceri', type: 'zihinsel' },
-            { id: 'z16', name: 'El Becerisi Gerektiren Bir Şey Yap', xp: 20, stat: 'Beceri', type: 'zihinsel' },
-            { id: 'f3', name: 'Günlük Egzersiz Yap (20-30 dk)', xp: 25, stat: 'Hareket', type: 'fiziksel' },
-            { id: 'f4', name: 'Yeterli Su Miktarını İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' },
-            { id: 'f11', name: 'Günlük Cilt Bakımı Yap', xp: 10, stat: 'Sağlık', type: 'fiziksel' },
-            { id: 'f8', name: 'Nefese Odaklan (5 dk)', xp: 10, stat: 'Beden', type: 'fiziksel' },
-        ];
+  { id: 'u6', name: 'Dengeli Beslen / Yeterli Su İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' }, // Temel sağlık alışkanlığı
+  { id: 'u2', name: 'Güç Üçgeni Egzersizi (Şınav, Squat, Plank)', xp: 21, stat: 'Beden', type: 'fiziksel' }, // Orta-zor fiziksel egzersiz
+  { id: 'u5', name: 'Günlük Koşu/Yürüyüş Yap (20-30 dk)', xp: 19, stat: 'Hareket', type: 'fiziksel' }, // Düzenli/daha uzun süreli hareket
+  { id: 'u4', name: 'Günlük Yaz (Duygu/Düşünce)', xp: 7, stat: 'Farkındalık', type: 'zihinsel' }, // Kolay farkındalık pratiği
+  { id: 'u1', name: 'Empati Kurma Egzersizi Yap', xp: 10, stat: 'Sosyal', type: 'zihinsel' }, // Orta sosyal/zihinsel çaba
+  { id: 'u3', name: 'Kitap Oku / Araştırma Yap (15-20 dk)', xp: 10, stat: 'Bilgi', type: 'zihinsel' }, // Düzenli bilgi alımı
+  { id: 'u7', name: 'Strateji Oyunu Oyna (Satranç, Sudoku vb.)', xp: 11, stat: 'Strateji', type: 'zihinsel' }, // Stratejik düşünme
+  { id: 'u8', name: 'Zihin Haritalama Yap (Mind Mapping)', xp: 12, stat: 'Yaratıcılık', type: 'zihinsel' }, // Yaratıcı düşünme/bağlantı kurma
+];
 
         const elements = {
             physicalTasksContainer: document.getElementById('physicalTasks'),
