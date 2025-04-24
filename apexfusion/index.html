@@ -331,14 +331,17 @@
 
         // Varsayılan görevler artık silinebilir olacak
         const DEFAULT_TASKS = [
-  { id: 'u6', name: 'Dengeli Beslen / Yeterli Su İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' }, // Temel sağlık alışkanlığı
-  { id: 'u2', name: 'Güç Üçgeni Egzersizi (Şınav, Squat, Plank)', xp: 21, stat: 'Beden', type: 'fiziksel' }, // Orta-zor fiziksel egzersiz
-  { id: 'u5', name: 'Günlük Koşu/Yürüyüş Yap (20-30 dk)', xp: 19, stat: 'Hareket', type: 'fiziksel' }, // Düzenli/daha uzun süreli hareket
-  { id: 'u4', name: 'Günlük Yaz (Duygu/Düşünce)', xp: 7, stat: 'Farkındalık', type: 'zihinsel' }, // Kolay farkındalık pratiği
-  { id: 'u1', name: 'Empati Kurma Egzersizi Yap', xp: 10, stat: 'Sosyal', type: 'zihinsel' }, // Orta sosyal/zihinsel çaba
-  { id: 'u3', name: 'Kitap Oku / Araştırma Yap (15-20 dk)', xp: 10, stat: 'Bilgi', type: 'zihinsel' }, // Düzenli bilgi alımı
-  { id: 'u7', name: 'Strateji Oyunu Oyna (Satranç, Sudoku vb.)', xp: 11, stat: 'Strateji', type: 'zihinsel' }, // Stratejik düşünme
-  { id: 'u8', name: 'Zihin Haritalama Yap (Mind Mapping)', xp: 12, stat: 'Yaratıcılık', type: 'zihinsel' }, // Yaratıcı düşünme/bağlantı kurma
+  // Fiziksel Görevler (4 adet, Toplam 50 XP)
+  { id: 'u6', name: 'Dengeli Beslen / Yeterli Su İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' }, // Kolay
+  { id: 'f9', name: 'Esneklik Egzersizi (Germe)', xp: 12, stat: 'Beden', type: 'fiziksel' }, // Orta
+  { id: 'u2', name: 'Güç Üçgeni Egzersizi (Şınav, Squat, Plank)', xp: 14, stat: 'Beden', type: 'fiziksel' }, // Zor
+  { id: 'u5', name: 'Günlük Koşu/Yürüyüş Yap (20-30 dk)', xp: 14, stat: 'Hareket', type: 'fiziksel' }, // Zor
+
+  // Zihinsel Görevler (4 adet, Toplam 50 XP)
+  { id: 'u4', name: 'Günlük Yaz (Duygu/Düşünce)', xp: 10, stat: 'Farkındalık', type: 'zihinsel' }, // Kolay
+  { id: 'u3', name: 'Kitap Oku / Araştırma Yap (15-20 dk)', xp: 12, stat: 'Bilgi', type: 'zihinsel' }, // Orta
+  { id: 'u7', name: 'Strateji Oyunu Oyna (Satranç, Sudoku vb.)', xp: 13, stat: 'Strateji', type: 'zihinsel' }, // Orta-Zor
+  { id: 'u8', name: 'Zihin Haritalama Yap (Mind Mapping)', xp: 15, stat: 'Yaratıcılık', type: 'zihinsel' }, // Zor
 ];
 
         const elements = {
