@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yusuf Eden</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" font-display="swap">
     <style>
         :root {
             --gradient-size: 750px;
@@ -22,7 +22,6 @@
                 --gradient-size: 500px;
             }
         }
-
 
         html, body {
             font-family: 'Inter', sans-serif;
@@ -43,12 +42,9 @@
              &::-webkit-scrollbar {
                 display: none;
             }
-
             scrollbar-width: none;
-
             -ms-overflow-style: none;
         }
-
 
         .container {
             max-width: 1200px;
@@ -84,7 +80,6 @@
             object-fit: cover;
             z-index: -1;
         }
-
 
         section h2 {
             font-size: 3em;
@@ -219,8 +214,7 @@
              color: #d0d0d0;
         }
 
-
-         #contact a {
+        #contact a {
             color: var(--primary-color);
             text-decoration: none;
             font-size: 1.2em;
@@ -233,7 +227,6 @@
             color: #0077cc;
             transform: translateY(-3px);
         }
-
 
         @media (max-width: 768px) {
             section {
@@ -293,19 +286,22 @@
 <body>
 
     <section id="home">
-        <video autoplay loop muted playsinline>
+        <video autoplay loop muted playsinline preload="auto">
             <source src="src/video1.mp4" type="video/mp4">
             Tarayıcınız video etiketini desteklemiyor.
         </video>
         <div class="container">
-            <img src="src/pics.jpg" alt="Profil Resmi" class="profile-image">
+            <img src="src/pics.jpg"
+                 alt="Profil Resmi"
+                 class="profile-image"
+                 loading="lazy">
             <h1>Yusuf Eden</h1>
             <p class="subtitle">Fırtınayı şekillendiren güç, Esinti ile başlar!</p>
             </div>
     </section>
 
     <section id="about">
-         <video autoplay loop muted playsinline>
+         <video autoplay loop muted playsinline preload="auto">
             <source src="src/video2.mp4" type="video/mp4">
             Tarayıcınız video etiketini desteklemiyor.
         </video>
@@ -325,7 +321,7 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
     </section>
 
     <section id="skills">
-         <video autoplay loop muted playsinline>
+         <video autoplay loop muted playsinline preload="auto">
             <source src="src/video3.mp4" type="video/mp4">
             Tarayıcınız video etiketini desteklemiyor.
         </video>
@@ -343,7 +339,7 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
     </section>
 
      <section id="projects">
-          <video autoplay loop muted playsinline>
+          <video autoplay loop muted playsinline preload="auto">
             <source src="src/video4.mp4" type="video/mp4">
             Tarayıcınız video etiketini desteklemiyor.
         </video>
@@ -368,7 +364,7 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
     </section>
 
     <section id="interests">
-         <video autoplay loop muted playsinline>
+         <video autoplay loop muted playsinline preload="auto">
             <source src="src/video5.mp4" type="video/mp4">
             Tarayıcınız video etiketini desteklemiyor.
         </video>
@@ -387,12 +383,12 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
             <p>Benimle bağlantılar kurmak için kullanılabilecek yollar:</p>
             <p>
                 <a href="mailto:ysf316tr@gmail.com">Güvenli İletişim Hattı (E-posta)</a>
-                <a href="https://github.com/DXpaTRick">Kod Arşivi (GitHub)</a>
+                <a href="https://github.com/ysf16tr">Kod Arşivi (GitHub)</a>
                 </p>
         </div>
     </section>
 
-    <audio id="background-music" loop>
+    <audio id="background-music" loop preload="auto">
         <source src="src/audio.mp3" type="audio/mpeg">
         Tarayıcınız ses etiketini desteklemiyor.
     </audio>
@@ -410,11 +406,12 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
                  if (!musicStarted) {
                      audioElement.play().then(() => {
                          musicStarted = true;
+                         console.log("Müzik başladı.");
                          window.removeEventListener('click', startMusic);
                          window.removeEventListener('wheel', startMusic);
                          window.removeEventListener('touchstart', startMusic);
                      }).catch(error => {
-                         console.log("Müzik çalma hatası:", error);
+                         console.log("Müzik çalma hatası (kullanıcı etkileşimi gerekiyor):", error);
                      });
                  }
              }
@@ -422,6 +419,7 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
              window.addEventListener('click', startMusic);
              window.addEventListener('wheel', startMusic);
              window.addEventListener('touchstart', startMusic);
+
         });
 
         const sections = document.querySelectorAll('section');
@@ -446,13 +444,14 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
             observer.observe(section);
         });
 
-
         let currentSectionIndex = 0;
         let isScrolling = false;
         const scrollDuration = 1000;
-        let touchStartY = 0;
-        const swipeThreshold = 50;
+        let touchStartY = 0; // Dokunma başlangıç Y koordinatı
+        let touchEndY = 0; // Dokunma bitiş Y koordinatı
+        const swipeThreshold = 50; // Kaydırma olarak algılanması için minimum piksel mesafesi
 
+        // Fare tekerleği olayını dinle
         window.addEventListener('wheel', (event) => {
             if (isScrolling || sections.length <= 1) {
                 return;
@@ -460,63 +459,58 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
 
             event.preventDefault();
 
-            const direction = event.deltaY > 0 ? 1 : -1;
+            const direction = event.deltaY > 0 ? 1 : -1; // 1 aşağı, -1 yukarı
 
             scrollToSection(direction);
-
         }, { passive: false });
 
+        // Dokunmatik başlangıç olayını dinle
         window.addEventListener('touchstart', (event) => {
-             if (isScrolling || sections.length <= 1) {
-                return;
-            }
-            if (event.touches.length === 1) {
-                touchStartY = event.touches[0].clientY;
-            }
-        });
+            touchStartY = event.touches[0].clientY; // İlk parmağın Y koordinatını kaydet
+        }, { passive: false }); // preventDefault kullanabilmek için passive: false
 
+        // Dokunmatik hareket olayını dinle (isteğe bağlı, pürüzsüz kaydırma için kullanılabilir)
         window.addEventListener('touchmove', (event) => {
-             if (isScrolling || sections.length <= 1) {
-                return;
-            }
-            event.preventDefault();
+             // Dokunmatik kaydırma sırasında varsayılan davranışı engelle
+             // Bu, sayfanın kendiliğinden kaymasını önler.
+             event.preventDefault();
         }, { passive: false });
 
+        // Dokunmatik bitiş olayını dinle
         window.addEventListener('touchend', (event) => {
-             if (isScrolling || sections.length <= 1) {
-                return;
-            }
+            touchEndY = event.changedTouches[0].clientY; // Parmağın ayrıldığı Y koordinatını kaydet
 
-            const touchEndY = event.changedTouches[0].clientY;
-            const swipeDistance = touchEndY - touchStartY;
+            // Dikey kaydırma mesafesini hesapla
+            const deltaY = touchEndY - touchStartY;
 
-            if (Math.abs(swipeDistance) > swipeThreshold) {
-                const direction = swipeDistance < 0 ? 1 : -1;
-
+            // Eğer yeterli dikey hareket varsa ve kaydırma devam etmiyorsa
+            if (Math.abs(deltaY) > swipeThreshold && !isScrolling) {
+                const direction = deltaY < 0 ? 1 : -1; // Yukarı kaydırma (deltaY negatif) aşağı gitmeli (direction 1), aşağı kaydırma (deltaY pozitif) yukarı gitmeli (direction -1)
                 scrollToSection(direction);
             }
         });
 
+        // Kaydırma işlemini gerçekleştiren fonksiyon
         function scrollToSection(direction) {
-            let nextSectionIndex = currentSectionIndex + direction;
+             let nextSectionIndex = currentSectionIndex + direction;
 
-            if (nextSectionIndex < 0) {
-                nextSectionIndex = 0;
-            } else if (nextSectionIndex >= sections.length) {
-                nextSectionIndex = sections.length - 1;
-            }
+             if (nextSectionIndex < 0) {
+                 nextSectionIndex = 0;
+             } else if (nextSectionIndex >= sections.length) {
+                 nextSectionIndex = sections.length - 1;
+             }
 
-            if (nextSectionIndex !== currentSectionIndex) {
-                isScrolling = true;
+             if (nextSectionIndex !== currentSectionIndex) {
+                 isScrolling = true;
 
-                sections[nextSectionIndex].scrollIntoView({ behavior: 'smooth' });
+                 sections[nextSectionIndex].scrollIntoView({ behavior: 'smooth' });
 
-                currentSectionIndex = nextSectionIndex;
+                 currentSectionIndex = nextSectionIndex;
 
-                setTimeout(() => {
-                    isScrolling = false;
-                }, scrollDuration);
-            }
+                 setTimeout(() => {
+                     isScrolling = false;
+                 }, scrollDuration);
+             }
         }
 
 
@@ -539,7 +533,6 @@ Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafın
                 currentSectionIndex = sectionInView;
             }
          });
-
     </script>
 
 </body>
