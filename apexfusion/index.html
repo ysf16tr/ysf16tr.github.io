@@ -223,13 +223,13 @@
         <section class="bg-rpg-card rounded-xl p-5 shadow-md border border-rpg-border mb-8">
             <h3 class="text-xl font-semibold mb-4 text-rpg-accent border-b border-rpg-border pb-2">ApexAI Görev Önerici 🤖</h3>
             <div class="mb-4">
-                <label for="ApexAIPrompt" class="form-label">ApexAI'den Görev Önerileri Al</label>
-                <textarea id="ApexAIPrompt" class="form-input h-24 resize-y" placeholder="Örn: Daha fazla odaklanmama yardımcı olacak zihinsel görevler öner."></textarea>
+                <label for="geminiPrompt" class="form-label">ApexAI'den Görev Önerileri Al</label>
+                <textarea id="geminiPrompt" class="form-input h-24 resize-y" placeholder="Örn: Daha fazla odaklanmama yardımcı olacak zihinsel görevler öner."></textarea>
             </div>
             <button id="suggestTasksButton" class="btn btn-primary w-full mb-4">
                 <i class="fas fa-magic mr-1"></i> Görev Öner
             </button>
-            <div id="ApexAILoading" class="hidden text-center text-rpg-subtext">
+            <div id="geminiLoading" class="hidden text-center text-rpg-subtext">
                 <i class="fas fa-spinner fa-spin text-2xl"></i> Görevler yükleniyor...
             </div>
             <div id="suggestedTasksOutput" class="space-y-3">
@@ -366,9 +366,9 @@
             authButton: document.getElementById('auth-button'),
             welcomeModal: document.getElementById('welcomeModal'),
             closeWelcomeModalButton: document.getElementById('closeWelcomeModalButton'),
-            ApexAIPrompt: document.getElementById('ApexAIPrompt'),
+            geminiPrompt: document.getElementById('geminiPrompt'),
             suggestTasksButton: document.getElementById('suggestTasksButton'),
-            ApexAILoading: document.getElementById('ApexAILoading'),
+            geminiLoading: document.getElementById('geminiLoading'),
             suggestedTasksOutput: document.getElementById('suggestedTasksOutput')
         };
 
@@ -1094,8 +1094,8 @@
             }
         });
 
-        async function callApexAIApi(prompt) {
-            elements.ApexAILoading.classList.remove('hidden');
+        async function callGeminiApi(prompt) {
+            elements.geminiLoading.classList.remove('hidden');
             elements.suggestedTasksOutput.innerHTML = '';
 
             let chatHistory = [];
@@ -1142,14 +1142,14 @@
                     const parsedJson = JSON.parse(json);
                     displaySuggestedTasks(parsedJson);
                 } else {
-                    showNotification("ApexAI Hatası", "Görev önerileri alınamadı. Lütfen tekrar deneyin.");
-                    console.error("ApexAI API'den beklenen yanıt alınamadı:", result);
+                    showNotification("Gemini Hatası", "Görev önerileri alınamadı. Lütfen tekrar deneyin.");
+                    console.error("Gemini API'den beklenen yanıt alınamadı:", result);
                 }
             } catch (error) {
-                showNotification("Ağ Hatası", "ApexAI API'ye bağlanırken bir sorun oluştu.");
-                console.error("ApexAI API çağrısı hatası:", error);
+                showNotification("Ağ Hatası", "Gemini API'ye bağlanırken bir sorun oluştu.");
+                console.error("Gemini API çağrısı hatası:", error);
             } finally {
-                elements.ApexAILoading.classList.add('hidden');
+                elements.geminiLoading.classList.add('hidden');
             }
         }
 
@@ -1228,9 +1228,9 @@
             });
 
             elements.suggestTasksButton.addEventListener('click', () => {
-                const prompt = elements.ApexAIPrompt.value.trim();
+                const prompt = elements.geminiPrompt.value.trim();
                 if (prompt) {
-                    callApexAIApi(prompt);
+                    callGeminiApi(prompt);
                 } else {
                     showNotification("Uyarı", "Lütfen bir görev önerisi için metin girin.");
                 }
