@@ -13,7 +13,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
     <script>
-        const firebaseConfig = {
+        // Firebase Config - Buraya kendi Firebase projenizin yapılandırma objesini yapıştırın
+          const firebaseConfig = {
                 apiKey: "AIzaSyBypJftfCA6AdJmSUEiMrl17s9md16C_RA",
                 authDomain: "apex-fusion-v1.firebaseapp.com",
                 projectId: "apex-fusion-v1",
@@ -22,8 +23,10 @@
                 appId: "1:568547733591:web:5b3d3637ec99dfc9007312"
             };
 
+        // Firebase'i Başlat
         firebase.initializeApp(firebaseConfig);
 
+        // Firebase Auth ve Firestore Referansları
         const auth = firebase.auth();
         const db = firebase.firestore();
 
@@ -77,7 +80,7 @@
             content: attr(data-tooltip);
             @apply absolute bg-gray-900 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap z-10;
         }
-        .form-input, .form-select {
+        .form-input, .form-select, .form-textarea { /* Added .form-textarea */
              @apply w-full px-3 py-2 bg-gray-700 border border-rpg-border rounded-md text-rpg-text focus:outline-none focus:ring-1 focus:ring-rpg-accent focus:border-rpg-accent text-sm;
         }
         .form-label {
@@ -97,6 +100,12 @@
         }
          .btn-google {
             @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+        }
+        .ai-suggestion-item {
+            @apply flex items-center justify-between p-3 bg-gray-700 rounded-md mb-2;
+        }
+        .ai-suggestion-text {
+            @apply text-rpg-text text-sm;
         }
     </style>
 </head>
@@ -221,21 +230,23 @@
         </section>
 
         <section class="bg-rpg-card rounded-xl p-5 shadow-md border border-rpg-border mb-8">
-            <h3 class="text-xl font-semibold mb-4 text-rpg-accent border-b border-rpg-border pb-2">ApexAI Görev Önerici 🤖</h3>
-            <div class="mb-4">
-                <label for="geminiPrompt" class="form-label">ApexAI'den Görev Önerileri Al</label>
-                <textarea id="geminiPrompt" class="form-input h-24 resize-y" placeholder="Örn: Daha fazla odaklanmama yardımcı olacak zihinsel görevler öner."></textarea>
-            </div>
-            <button id="suggestTasksButton" class="btn btn-primary w-full mb-4">
-                <i class="fas fa-magic mr-1"></i> Görev Öner
-            </button>
-            <div id="geminiLoading" class="hidden text-center text-rpg-subtext">
-                <i class="fas fa-spinner fa-spin text-2xl"></i> Görevler yükleniyor...
-            </div>
-            <div id="suggestedTasksOutput" class="space-y-3">
+            <h3 class="text-xl font-semibold mb-4 text-rpg-accent border-b border-rpg-border pb-2">AI Koç 🤖</h3>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <label for="aiCoachInput" class="form-label">Koçuna bir soru sor:</label>
+                    <textarea id="aiCoachInput" class="form-textarea h-24" placeholder="Örn: Daha iyi strateji geliştirmek için ne yapmalıyım?"></textarea>
                 </div>
+                <button id="askAiButton" class="btn btn-primary">
+                    <i class="fas fa-paper-plane mr-1"></i> Soruyu Gönder
+                </button>
+                <div id="aiCoachResponse" class="bg-gray-800 p-4 rounded-md text-rpg-text min-h-[100px] relative">
+                    <p class="text-rpg-subtext italic" id="aiCoachPlaceholder">Cevap burada belirecek...</p>
+                    <div id="aiLoadingIndicator" class="hidden absolute inset-0 flex items-center justify-center bg-rpg-modal-bg rounded-md">
+                        <i class="fas fa-spinner fa-spin text-rpg-accent text-3xl"></i>
+                    </div>
+                </div>
+            </div>
         </section>
-
         <section class="text-center">
             <button id="resetButton" class="btn btn-danger">
                 <i class="fas fa-trash-alt mr-1"></i> Tüm Verileri Sıfırla
@@ -292,10 +303,21 @@
             removedDefaultTasks: 'rpg_removedDefaultTasks_v1'
         };
 
+        // Sabit XP eşiklerini kaldırıyoruz.
+        // const LEVEL_THRESHOLDS = [0, 500, 1500, 3000, 5000, 7500, 10000, 13000];
+
+        // Seviye 1 için başlangıç XP'si
         const BASE_XP_FOR_LEVEL_1 = 500;
+        // Seviye 2'den itibaren her seviye için XP artışının başlangıcı
         const BASE_LEVEL_INCREMENT = 1000;
+        // Seviye artışının her seviyede ne kadar artacağı
         const ADDITIONAL_INCREMENT_PER_LEVEL = 500;
 
+        /**
+         * Belirli bir seviyeye ulaşmak için gereken toplam XP'yi hesaplar.
+         * @param {number} level - Hesaplamak istenen seviye (1 ve üzeri).
+         * @returns {number} - O seviyeye ulaşmak için gereken toplam XP.
+         */
         function getTotalXPForLevel(level) {
             if (level < 1) return 0;
             if (level === 1) return BASE_XP_FOR_LEVEL_1;
@@ -317,7 +339,7 @@
             { xp: 3000, icon: '💎', name: 'Potansiyel Geliştirici', rank: 'Ustalık' },
             { xp: 5000, icon: '🏆', name: 'Strateji Ustası Adayı', rank: 'Kahramanlık' },
             { xp: 7500, icon: '🌟', name: 'İçsel Usta', rank: 'Efsanevi' },
-            { xp: getTotalXPForLevel(6), icon: '✨', name: 'Gerçeklik Simyacısı', rank: 'Gerçeklik' },
+            { xp: getTotalXPForLevel(6), icon: '✨', name: 'Gerçeklik Simyacısı', rank: 'Gerçeklik' }, // Rozet XP'sini dinamik hesapla
         ];
 
         const INITIAL_STATS = {
@@ -331,16 +353,20 @@
             Beden: 0
         };
 
+        // Varsayılan görevler artık silinebilir olacak
         const DEFAULT_TASKS = [
-          { id: 'u6', name: 'Dengeli Beslen / Yeterli Su İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' },
-          { id: 'f9', name: 'Esneklik Egzersizi (Germe)', xp: 12, stat: 'Beden', type: 'fiziksel' },
-          { id: 'u2', name: 'Güç Üçgeni Egzersizi (Şınav, Squat, Plank)', xp: 14, stat: 'Beden', type: 'fiziksel' },
-          { id: 'u5', name: 'Günlük Koşu/Yürüyüş Yap (20-30 dk)', xp: 14, stat: 'Hareket', type: 'fiziksel' },
-          { id: 'u4', name: 'Günlük Yaz (Duygu/Düşünce)', xp: 10, stat: 'Farkındalık', type: 'zihinsel' },
-          { id: 'u3', name: 'Kitap Oku / Araştırma Yap (15-20 dk)', xp: 12, stat: 'Bilgi', type: 'zihinsel' },
-          { id: 'u7', name: 'Strateji Oyunu Oyna (Satranç, Sudoku vb.)', xp: 13, stat: 'Strateji', type: 'zihinsel' },
-          { id: 'u8', name: 'Zihin Haritalama Yap (Mind Mapping)', xp: 15, stat: 'Yaratıcılık', type: 'zihinsel' },
-        ];
+  // Fiziksel Görevler (4 adet, Toplam 50 XP)
+  { id: 'u6', name: 'Dengeli Beslen / Yeterli Su İç', xp: 10, stat: 'Sağlık', type: 'fiziksel' }, // Kolay
+  { id: 'f9', name: 'Esneklik Egzersizi (Germe)', xp: 12, stat: 'Beden', type: 'fiziksel' }, // Orta
+  { id: 'u2', name: 'Güç Üçgeni Egzersizi (Şınav, Squat, Plank)', xp: 14, stat: 'Beden', type: 'fiziksel' }, // Zor
+  { id: 'u5', name: 'Günlük Koşu/Yürüyüş Yap (20-30 dk)', xp: 14, stat: 'Hareket', type: 'fiziksel' }, // Zor
+
+  // Zihinsel Görevler (4 adet, Toplam 50 XP)
+  { id: 'u4', name: 'Günlük Yaz (Duygu/Düşünce)', xp: 10, stat: 'Farkındalık', type: 'zihinsel' }, // Kolay
+  { id: 'u3', name: 'Kitap Oku / Araştırma Yap (15-20 dk)', xp: 12, stat: 'Bilgi', type: 'zihinsel' }, // Orta
+  { id: 'u7', name: 'Strateji Oyunu Oyna (Satranç, Sudoku vb.)', xp: 13, stat: 'Strateji', type: 'zihinsel' }, // Orta-Zor
+  { id: 'u8', name: 'Zihin Haritalama Yap (Mind Mapping)', xp: 15, stat: 'Yaratıcılık', type: 'zihinsel' }, // Zor
+];
 
         const elements = {
             physicalTasksContainer: document.getElementById('physicalTasks'),
@@ -364,12 +390,15 @@
             authStatus: document.getElementById('auth-status'),
             userEmail: document.getElementById('user-email'),
             authButton: document.getElementById('auth-button'),
+            // Welcome modal elementleri
             welcomeModal: document.getElementById('welcomeModal'),
             closeWelcomeModalButton: document.getElementById('closeWelcomeModalButton'),
-            geminiPrompt: document.getElementById('geminiPrompt'),
-            suggestTasksButton: document.getElementById('suggestTasksButton'),
-            geminiLoading: document.getElementById('geminiLoading'),
-            suggestedTasksOutput: document.getElementById('suggestedTasksOutput')
+            // AI Coach elements
+            aiCoachInput: document.getElementById('aiCoachInput'),
+            askAiButton: document.getElementById('askAiButton'),
+            aiCoachResponse: document.getElementById('aiCoachResponse'),
+            aiCoachPlaceholder: document.getElementById('aiCoachPlaceholder'),
+            aiLoadingIndicator: document.getElementById('aiLoadingIndicator')
         };
 
         let state = {
@@ -477,6 +506,7 @@
              return allTasks.filter(task => task.type === type).length;
         }
 
+        // Varsayılan görevleri filtreleyerek tüm görevleri döndürür
         function getAllTasks() {
             const activeDefaultTasks = DEFAULT_TASKS.filter(task => !state.removedDefaultTaskIds.includes(task.id));
             return [...activeDefaultTasks, ...state.customTasks];
@@ -486,23 +516,30 @@
             const currentMonthKey = getCurrentMonthKey();
 
             if (user) {
+                // Kullanıcı giriş yapmışsa Firebase'den yükle
                 const userDocRef = db.collection('users').doc(user.uid);
                 try {
                     const doc = await userDocRef.get();
                     if (doc.exists) {
                         state = doc.data();
+                        console.log("Firebase'den veri yüklendi.");
 
+                        // removedDefaultTaskIds yoksa boş array olarak başlat
                         if (!state.removedDefaultTaskIds) {
                             state.removedDefaultTaskIds = [];
                         }
 
+                        // Firebase'den yüklenen veride stat sıfırlama ayarı yoksa veya eskiyse sıfırla
                         if (state.lastStatResetMonth !== currentMonthKey) {
+                            console.log(`Yeni ay (${currentMonthKey}) algılandı veya Firebase verisinde ay bilgisi eksik. Yetenekler sıfırlanıyor.`);
                             state.stats = { ...INITIAL_STATS };
                             state.lastStatResetMonth = currentMonthKey;
+                            // Sıfırlanmış durumu hemen Firebase'e kaydet
                             await saveState(user);
                             showNotification("Yeni Ay Başlangıcı!", "Bu ayki yetenek puanlarınız sıfırlandı.");
                         }
 
+                         // Seri kontrolü (Firebase verisinden sonra)
                          if (state.lastCompletionDate) {
                             const lastDate = new Date(state.lastCompletionDate);
                             const yesterday = new Date();
@@ -517,6 +554,8 @@
                         }
 
                     } else {
+                        console.log("Firebase'de kullanıcı verisi bulunamadı, yeni oluşturuluyor.");
+                        // Yeni kullanıcı veya ilk kez giriş yapan kullanıcı
                         state = {
                             xp: 0,
                             history: {},
@@ -525,21 +564,25 @@
                             customTasks: [],
                             lastCompletionDate: null,
                             streak: 0,
-                            lastStatResetMonth: currentMonthKey,
-                            removedDefaultTaskIds: []
+                            lastStatResetMonth: currentMonthKey, // Yeni ay bilgisi ile başla
+                            removedDefaultTaskIds: [] // Yeni kullanıcı için boş başlat
                         };
-                         await saveState(user);
+                         await saveState(user); // Başlangıç durumunu Firebase'e kaydet
                          showNotification("Hoş Geldiniz!", "Yeni bir profil oluşturuldu.");
                     }
                 } catch (error) {
                     console.error("Firebase veri yükleme hatası:", error);
+                    // Hata durumunda yerel depolamaya geri dön
                     loadStateLocal();
                     showNotification("Hata!", "Firebase verileri yüklenemedi, yerel depolama kullanılıyor.");
                 }
             } else {
+                // Kullanıcı giriş yapmamışsa yerel depolamadan yükle
                 loadStateLocal();
+                console.log("Yerel depolamadan veri yüklendi.");
             }
 
+             // Yükleme tamamlandıktan sonra UI'ı render et
             renderAll();
         }
 
@@ -553,11 +596,13 @@
             state.lastCompletionDate = localStorage.getItem(LOCAL_STORAGE_KEYS.lastCompletionDate);
             state.streak = parseInt(localStorage.getItem(LOCAL_STORAGE_KEYS.streak) || '0', 10);
             state.lastStatResetMonth = localStorage.getItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
+            // removedDefaultTaskIds'ı yerel depolamadan yükle
             state.removedDefaultTaskIds = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEYS.removedDefaultTasks) || '[]');
 
 
             const currentMonthKey = getCurrentMonthKey();
             if (state.lastStatResetMonth !== currentMonthKey) {
+                console.log(`Yeni ay (${currentMonthKey}) algılandı. Yerel yetenekler sıfırlanıyor.`);
                 state.stats = { ...INITIAL_STATS };
                 state.lastStatResetMonth = currentMonthKey;
                 saveStateLocal();
@@ -584,12 +629,14 @@
                 const userDocRef = db.collection('users').doc(user.uid);
                 try {
                     await userDocRef.set(state);
+                    console.log("Firebase'e veri kaydedildi.");
                 } catch (error) {
                     console.error("Firebase veri kaydetme hatası:", error);
                     showNotification("Hata!", "Firebase verileri kaydedilemedi.");
                 }
             } else {
                 saveStateLocal();
+                console.log("Yerel depolamaya veri kaydedildi.");
             }
         }
 
@@ -610,16 +657,24 @@
             } else {
                  localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
             }
+            // removedDefaultTaskIds'ı yerel depolamaya kaydet
             localStorage.setItem(LOCAL_STORAGE_KEYS.removedDefaultTasks, JSON.stringify(state.removedDefaultTaskIds));
         }
 
 
+        /**
+         * Mevcut XP'ye göre kullanıcının seviyesini ve bir sonraki seviye bilgilerini hesaplar.
+         * Dinamik XP eşiklerini kullanır.
+         * @param {number} currentXP - Kullanıcının mevcut XP'si.
+         * @returns {{level: number, xpForNext: number, progress: number, neededForNext: number, percentage: number}} - Seviye bilgileri.
+         */
         function calculateLevelInfo(currentXP) {
             let currentLevel = 1;
-            let xpForCurrentLevel = 0;
-            let xpForNextLevel = getTotalXPForLevel(1);
+            let xpForCurrentLevel = 0; // Mevcut seviyeye ulaşmak için gereken toplam XP
+            let xpForNextLevel = getTotalXPForLevel(1); // Bir sonraki seviyeye (Level 1) ulaşmak için gereken toplam XP
 
-            while (currentXP >= xpForNextLevel && currentLevel < 100) {
+            // Kullanıcının XP'sinin hangi seviyeye karşılık geldiğini bul
+            while (currentXP >= xpForNextLevel && currentLevel < 100) { // Maksimum seviye sınırı ekleyebiliriz
                 currentLevel++;
                 xpForCurrentLevel = xpForNextLevel;
                 xpForNextLevel = getTotalXPForLevel(currentLevel);
@@ -632,12 +687,14 @@
 
             return {
                 level: currentLevel,
-                xpForNext: xpForNextLevel,
-                progress: xpProgressInLevel,
-                neededForNext: xpNeededForNext,
-                percentage: Math.min(100, progressPercentage)
+                xpForNext: xpForNextLevel, // Bu aslında bir sonraki seviyeye ulaşmak için gereken TOPLAM XP
+                progress: xpProgressInLevel, // Mevcut seviyedeki ilerleme
+                neededForNext: xpNeededForNext, // Bir sonraki seviye için gereken EK XP
+                percentage: Math.min(100, progressPercentage) // Yüzde 100'ü geçmemeli
             };
         }
+
+        // getAllTasks fonksiyonu yukarı taşındı ve güncellendi
 
         function renderTasks() {
              elements.physicalTasksContainer.innerHTML = '';
@@ -657,6 +714,7 @@
                  taskElement.dataset.stat = task.stat;
                  taskElement.dataset.type = task.type;
                  taskElement.dataset.id = task.id;
+                 // Görevin varsayılan olup olmadığını işaretle
                  const isDefault = DEFAULT_TASKS.some(dt => dt.id === task.id);
                  taskElement.dataset.isDefault = isDefault;
 
@@ -677,6 +735,7 @@
                  checkbox.addEventListener('change', handleTaskChange);
 
                  const deleteButton = taskElement.querySelector('.delete-task-btn');
+                 // Tüm görevlere silme butonu ekleniyor
                  deleteButton.addEventListener('click', () => handleDeleteTask(task.id));
 
 
@@ -702,10 +761,11 @@
             const completedTasks = Object.values(state.tasks).filter(Boolean).length;
             elements.doneCount.textContent = `${completedTasks} / ${totalTasks}`;
 
-            const levelInfo = calculateLevelInfo(state.xp);
+            const levelInfo = calculateLevelInfo(state.xp); // calculateLevelInfo'ya state.xp'yi gönder
             elements.level.textContent = levelInfo.level;
             elements.xpCount.textContent = state.xp;
             elements.xpBar.style.width = `${levelInfo.percentage}%`;
+            // Bir sonraki seviye için gereken ek XP'yi göster
             elements.xpNextLevel.textContent = levelInfo.neededForNext <= 0 ? "Maksimum Seviye!" : `Sonraki seviye için: ${levelInfo.neededForNext} XP`;
 
 
@@ -743,8 +803,10 @@
 
             for (const [key, value] of sortedStats) {
                 const numberOfTasks = taskCountPerStat[key] || 0;
+                // Aylık maksimum tamamlama sayısı (varsayılan olarak 30 gün)
                 const monthlyMaxCompletions = numberOfTasks * 30;
 
+                // Yetenek puanının aylık maksimum tamamlama sayısına oranı
                 const percentage = monthlyMaxCompletions > 0 ? (value / monthlyMaxCompletions) * 100 : 0;
 
                 const statDiv = document.createElement('div');
@@ -833,6 +895,7 @@
             const taskData = getAllTasks().find(t => t.id === taskId);
 
             if (!taskData) {
+                console.error("Görev verisi bulunamadı:", taskId);
                 return;
             }
 
@@ -845,7 +908,7 @@
             const xpChange = isChecked ? xpValue : -xpValue;
             const statChange = isChecked ? 1 : -1;
 
-            const previousLevel = calculateLevelInfo(state.xp).level;
+            const previousLevel = calculateLevelInfo(state.xp).level; // calculateLevelInfo'ya state.xp'yi gönder
 
             state.xp += xpChange;
             if (state.xp < 0) state.xp = 0;
@@ -894,7 +957,7 @@
 
             renderAll();
 
-            const currentLevel = calculateLevelInfo(state.xp).level;
+            const currentLevel = calculateLevelInfo(state.xp).level; // calculateLevelInfo'ya state.xp'yi gönder
             if (currentLevel > previousLevel) {
                 showNotification(`Tebrikler! Seviye ${currentLevel}'e ulaştın! 🎉`);
             } else {
@@ -913,7 +976,7 @@
             const type = form.taskType.value;
 
             if (!name || isNaN(xp) || xp <= 0 || !stat || !type) {
-                showNotification("Hata", "Lütfen tüm alanları doğru şekilde doldurun.");
+                showModal("Hata!", "Lütfen tüm alanları doğru şekilde doldurun."); // Replaced alert with showModal
                 return;
             }
 
@@ -931,6 +994,7 @@
             showNotification("Yeni Görev Eklendi!", `${name} (+${xp} XP, +1 ${statDisplay})`);
         }
 
+        // Görev silme fonksiyonu güncellendi
         async function handleDeleteTask(taskId) {
              const task = getAllTasks().find(t => t.id === taskId);
              if (!task) return;
@@ -943,13 +1007,16 @@
                  `"${taskName}" görevini silmek istediğinizden emin misiniz? ${isDefault ? "Bu varsayılan bir görevdir ve silindikten sonra tekrar eklemek için verileri sıfırlamanız gerekebilir." : ""}`,
                  async () => {
                      if (isDefault) {
+                         // Varsayılan görevi kaldırılanlar listesine ekle
                          if (!state.removedDefaultTaskIds.includes(taskId)) {
                              state.removedDefaultTaskIds.push(taskId);
                          }
                      } else {
+                         // Özel görevi customTasks listesinden kaldır
                          state.customTasks = state.customTasks.filter(t => t.id !== taskId);
                      }
 
+                     // Tamamlanmış görevler listesinden kaldır (varsa)
                      delete state.tasks[taskId];
 
                      await saveState(auth.currentUser);
@@ -965,15 +1032,18 @@
                  "Tüm Verileri Sıfırla",
                  "Emin misin? Tüm ilerlemen ve görevlerin silinecek! Bu işlem geri alınamaz.",
                  async () => {
+                     // Firebase'de oturum açmışsa Firebase verisini sil
                      if (auth.currentUser) {
                          try {
                              await db.collection('users').doc(auth.currentUser.uid).delete();
+                             console.log("Firebase verisi silindi.");
                          } catch (error) {
                              console.error("Firebase veri silme hatası:", error);
                              showNotification("Hata!", "Firebase verileri silinemedi.");
                          }
                      }
 
+                     // Yerel depolamayı temizle
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.xp);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.history);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.tasks);
@@ -983,7 +1053,7 @@
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.streak);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.lastStatResetMonth);
                      localStorage.removeItem(LOCAL_STORAGE_KEYS.hasSeenWelcome);
-                     localStorage.removeItem(LOCAL_STORAGE_KEYS.removedDefaultTasks);
+                     localStorage.removeItem(LOCAL_STORAGE_KEYS.removedDefaultTasks); // Kaldırılan varsayılan görevleri de sil
 
                      location.reload();
                  }
@@ -1009,12 +1079,14 @@
             }, 300);
         }
 
+        // Welcome modalı gösterme fonksiyonu
         function showWelcomeModal() {
              elements.welcomeModal.classList.remove('opacity-0', 'pointer-events-none');
              elements.welcomeModal.querySelector('.modal-content').classList.remove('scale-95');
              elements.welcomeModal.querySelector('.modal-content').classList.add('scale-100');
         }
 
+        // Welcome modalı gizleme fonksiyonu
         function hideWelcomeModal() {
              elements.welcomeModal.querySelector('.modal-content').classList.remove('scale-100');
              elements.welcomeModal.querySelector('.modal-content').classList.add('scale-95');
@@ -1027,6 +1099,7 @@
 
         function showNotification(title, body = '') {
              if (!('Notification' in window)) {
+                 console.log("Tarayıcı bildirimleri desteklemiyor.");
                  return;
              }
 
@@ -1052,6 +1125,7 @@
             }
         }
 
+        // Firebase Google Giriş Fonksiyonu
         async function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
@@ -1062,6 +1136,7 @@
             }
         }
 
+        // Firebase Çıkış Fonksiyonu
         async function signOut() {
             try {
                 await auth.signOut();
@@ -1071,62 +1146,78 @@
             }
         }
 
+        // Firebase Auth Durum Değişikliği Dinleyicisi
         auth.onAuthStateChanged(async (user) => {
             if (user) {
+                // Kullanıcı giriş yapmış
                 elements.userEmail.textContent = user.email;
                 elements.authButton.textContent = 'Çıkış Yap';
                 elements.authButton.removeEventListener('click', signInWithGoogle);
                 elements.authButton.addEventListener('click', signOut);
-                await loadState(user);
+                console.log("Kullanıcı giriş yaptı:", user.uid);
+                await loadState(user); // Firebase'den veriyi yükle
             } else {
+                // Kullanıcı çıkış yapmış veya hiç giriş yapmamış (Misafir)
                 elements.userEmail.textContent = 'Misafir';
                 elements.authButton.textContent = 'Google ile Giriş Yap';
                 elements.authButton.removeEventListener('click', signOut);
                 elements.authButton.addEventListener('click', signInWithGoogle);
-                await loadState(null);
+                console.log("Kullanıcı çıkış yaptı.");
+                await loadState(null); // Yerel depolamadan veriyi yükle
 
+                // Misafir ve ilk defa geliyorsa hoş geldin modalını göster
                 const hasSeenWelcome = localStorage.getItem(LOCAL_STORAGE_KEYS.hasSeenWelcome);
                 if (!hasSeenWelcome) {
+                    // Küçük bir gecikme ekleyerek sayfanın yüklenmesini bekle
                     setTimeout(() => {
                          showWelcomeModal();
-                    }, 500);
+                    }, 500); // Gecikme süresini ayarlayabilirsiniz
                 }
             }
         });
 
-        async function callGeminiApi(prompt) {
-            elements.geminiLoading.classList.remove('hidden');
-            elements.suggestedTasksOutput.innerHTML = '';
+        // Gemini API entegrasyonu için yeni fonksiyon
+        async function askAiCoach() {
+            const prompt = elements.aiCoachInput.value.trim();
+            if (!prompt) {
+                showModal("Uyarı!", "Lütfen AI Koç'a bir soru sorun."); // Replaced alert with showModal
+                return;
+            }
 
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-
-            const statEnumValues = Object.keys(INITIAL_STATS);
-
-            const payload = {
-                contents: chatHistory,
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: {
-                                "name": { "type": "STRING" },
-                                "xp": { "type": "NUMBER" },
-                                "stat": { "type": "STRING", "enum": statEnumValues },
-                                "type": { "type": "STRING", "enum": ["fiziksel", "zihinsel"] }
-                            },
-                            "required": ["name", "xp", "stat", "type"]
-                        }
-                    }
-                }
-            };
-
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+            elements.aiCoachPlaceholder.classList.add('hidden');
+            elements.aiCoachResponse.innerHTML = ''; // Clear previous response
+            elements.aiLoadingIndicator.classList.remove('hidden'); // Show loading indicator
+            elements.askAiButton.disabled = true; // Disable button during loading
 
             try {
+                let chatHistory = [];
+                // Construct the prompt in Turkish, asking for structured JSON output
+                const geminiPrompt = `Kullanıcı benden bir egzersiz rutini oluşturmamı istiyor. Hedefi: '${prompt}'. Lütfen bana bu hedefe uygun, 5 adet fiziksel veya zihinsel görev önerisi sun. Her görev için 'name' (görev adı), 'xp' (deneyim puanı, 10-50 arası bir sayı), 'stat' (ilgili yetenek, sadece bu değerlerden biri olabilir: 'Strateji', 'Bilgi', 'Yaratıcılık', 'Farkındalık', 'Beceri', 'Hareket', 'Sağlık', 'Beden'), ve 'type' (tür, 'fiziksel' veya 'zihinsel') alanlarını içeren bir JSON dizisi olarak yanıt ver. Öneriler kısa ve net olsun.`;
+
+                chatHistory.push({ role: "user", parts: [{ text: geminiPrompt }] });
+
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "ARRAY",
+                            items: {
+                                type: "OBJECT",
+                                properties: {
+                                    "name": { "type": "STRING" },
+                                    "xp": { "type": "NUMBER" },
+                                    "stat": { "type": "STRING" },
+                                    "type": { "type": "STRING" }
+                                },
+                                "propertyOrdering": ["name", "xp", "stat", "type"]
+                            }
+                        }
+                    }
+                };
+                const apiKey = "AIzaSyAdQI8Ps_H9v8Sz839ggd-VSBftu8qfvIQ"; // User provided API key
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1138,69 +1229,80 @@
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
-                    const json = result.candidates[0].content.parts[0].text;
-                    const parsedJson = JSON.parse(json);
-                    displaySuggestedTasks(parsedJson);
+                    const jsonString = result.candidates[0].content.parts[0].text;
+                    const suggestedTasks = JSON.parse(jsonString);
+
+                    if (suggestedTasks && suggestedTasks.length > 0) {
+                        elements.aiCoachResponse.innerHTML = '<p class="text-rpg-accent mb-3">AI Koç\'tan Görev Önerileri:</p>';
+                        suggestedTasks.forEach(task => {
+                            const taskDiv = document.createElement('div');
+                            taskDiv.className = 'ai-suggestion-item';
+                            const statDisplay = task.stat ? task.stat.substring(0,3) + '.' : '';
+                            taskDiv.innerHTML = `
+                                <span class="ai-suggestion-text">${task.name} (+${task.xp} XP, +1 ${statDisplay}) (${task.type === 'fiziksel' ? 'Fiziksel' : 'Zihinsel'})</span>
+                                <button class="btn btn-secondary btn-sm" data-task='${JSON.stringify(task)}'>Ekle</button>
+                            `;
+                            elements.aiCoachResponse.appendChild(taskDiv);
+
+                            taskDiv.querySelector('button').addEventListener('click', (e) => {
+                                const taskData = JSON.parse(e.target.dataset.task);
+                                addSuggestedTask(taskData);
+                            });
+                        });
+                    } else {
+                        elements.aiCoachResponse.innerHTML = '<p class="text-rpg-subtext italic">AI Koç bu konuda bir öneri bulamadı. Lütfen farklı bir soru deneyin.</p>';
+                    }
+
                 } else {
-                    showNotification("Gemini Hatası", "Görev önerileri alınamadı. Lütfen tekrar deneyin.");
-                    console.error("Gemini API'den beklenen yanıt alınamadı:", result);
+                    elements.aiCoachResponse.innerHTML = '<p class="text-red-400">AI Koç bir yanıt üretemedi. Lütfen daha sonra tekrar deneyin.</p>';
+                    console.error("Gemini API'den beklenmedik yanıt yapısı:", result);
                 }
             } catch (error) {
-                showNotification("Ağ Hatası", "Gemini API'ye bağlanırken bir sorun oluştu.");
-                console.error("Gemini API çağrısı hatası:", error);
+                elements.aiCoachResponse.innerHTML = '<p class="text-red-400">AI Koç ile iletişim kurulurken bir hata oluştu. İnternet bağlantınızı kontrol edin veya daha sonra tekrar deneyin.</p>';
+                console.error("AI Koç API hatası:", error);
             } finally {
-                elements.geminiLoading.classList.add('hidden');
+                elements.aiLoadingIndicator.classList.add('hidden'); // Hide loading indicator
+                elements.askAiButton.disabled = false; // Enable button
             }
         }
 
-        function displaySuggestedTasks(tasks) {
-            elements.suggestedTasksOutput.innerHTML = '';
-            if (tasks.length === 0) {
-                elements.suggestedTasksOutput.innerHTML = '<p class="text-rpg-subtext text-sm italic">Önerilen görev bulunamadı.</p>';
-                return;
-            }
+        // Function to add a suggested task from AI Coach
+        async function addSuggestedTask(task) {
+            // Generate a unique ID for the new task
+            const newTaskId = `ai_suggested_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            const newTask = { ...task, id: newTaskId }; // Add the generated ID to the task object
 
-            tasks.forEach(task => {
-                const taskElement = document.createElement('div');
-                taskElement.className = 'flex items-center p-3 rounded-lg bg-gray-800 border border-rpg-border mb-2';
-                const statDisplay = task.stat ? task.stat.substring(0,3) + '.' : '';
-                taskElement.innerHTML = `
-                    <div class="flex-1">
-                        <p class="text-rpg-text font-medium">${task.name}</p>
-                        <p class="text-xs text-rpg-subtext">+${task.xp} XP, +1 ${statDisplay} (${task.type === 'fiziksel' ? 'Fiziksel' : 'Zihinsel'})</p>
-                    </div>
-                    <button class="btn btn-primary btn-sm ml-4 add-suggested-task-btn"
-                            data-name="${task.name}"
-                            data-xp="${task.xp}"
-                            data-stat="${task.stat}"
-                            data-type="${task.type}">
-                        Ekle
-                    </button>
-                `;
-                elements.suggestedTasksOutput.appendChild(taskElement);
-            });
+            state.customTasks.push(newTask); // Add to custom tasks
 
-            document.querySelectorAll('.add-suggested-task-btn').forEach(button => {
-                button.addEventListener('click', addSuggestedTaskToRoutine);
-            });
+            await saveState(auth.currentUser); // Save the updated state
+            renderAll(); // Re-render the UI
+
+            showNotification("Görev Eklendi!", `${task.name} görevi AI Koç tarafından eklendi.`);
         }
 
-        async function addSuggestedTaskToRoutine(event) {
-            const button = event.target;
-            const name = button.dataset.name;
-            const xp = parseInt(button.dataset.xp, 10);
-            const stat = button.dataset.stat;
-            const type = button.dataset.type;
 
-            const newTask = { id: `custom_${Date.now()}`, name: name, xp: xp, stat: stat, type: type };
-            state.customTasks.push(newTask);
-            await saveState(auth.currentUser);
-            renderAll();
-            showNotification("Görev Eklendi!", `${name} rutininize eklendi.`);
-            button.disabled = true;
-            button.textContent = 'Eklendi';
-            button.classList.remove('btn-primary');
-            button.classList.add('btn-secondary');
+        // Custom modal function to replace alert/confirm
+        function showModal(title, message) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            elements.modalConfirmButton.classList.add('hidden'); // Hide confirm button for simple alerts
+            elements.modalCancelButton.textContent = 'Tamam'; // Change cancel button text to OK
+            currentConfirmCallback = null; // No confirm action for simple alert
+            elements.confirmationModal.classList.remove('opacity-0', 'pointer-events-none');
+            elements.confirmationModal.querySelector('.modal-content').classList.remove('scale-95');
+            elements.confirmationModal.querySelector('.modal-content').classList.add('scale-100');
+        }
+
+        function hideModal() {
+            elements.confirmationModal.querySelector('.modal-content').classList.remove('scale-100');
+            elements.confirmationModal.querySelector('.modal-content').classList.add('scale-95');
+            elements.confirmationModal.classList.add('opacity-0');
+            setTimeout(() => {
+                elements.confirmationModal.classList.add('pointer-events-none');
+                elements.modalConfirmButton.classList.remove('hidden'); // Show confirm button for next use
+                elements.modalCancelButton.textContent = 'İptal'; // Reset cancel button text
+                currentConfirmCallback = null;
+            }, 300);
         }
 
 
@@ -1214,28 +1316,29 @@
 
             elements.addTaskForm.addEventListener('submit', handleAddTask);
             elements.resetButton.addEventListener('click', handleResetRequest);
-            elements.modalCancelButton.addEventListener('click', hideConfirmationModal);
+            // Modified modal button listeners to use hideModal
+            elements.modalCancelButton.addEventListener('click', hideModal);
             elements.modalConfirmButton.addEventListener('click', () => {
                 if (typeof currentConfirmCallback === 'function') {
                     currentConfirmCallback();
                 }
-                hideConfirmationModal();
+                hideModal(); // Use hideModal for confirmation
             });
 
+            // Welcome modal kapatma butonu dinleyicisi
             elements.closeWelcomeModalButton.addEventListener('click', () => {
                 hideWelcomeModal();
-                localStorage.setItem(LOCAL_STORAGE_KEYS.hasSeenWelcome, 'true');
+                localStorage.setItem(LOCAL_STORAGE_KEYS.hasSeenWelcome, 'true'); // Kullanıcının gördüğünü işaretle
             });
 
-            elements.suggestTasksButton.addEventListener('click', () => {
-                const prompt = elements.geminiPrompt.value.trim();
-                if (prompt) {
-                    callGeminiApi(prompt);
-                } else {
-                    showNotification("Uyarı", "Lütfen bir görev önerisi için metin girin.");
-                }
-            });
+            // AI Coach button listener
+            elements.askAiButton.addEventListener('click', askAiCoach);
 
+
+            // Auth durumu değiştiğinde loadState ve renderAll otomatik çağrılacak
+            // İlk yüklemede onAuthStateChanged tetiklenir ve loadState'i çağırır.
+
+            console.log("Apex Fusion Başlatıldı!");
         }
 
         document.addEventListener('DOMContentLoaded', initializeApp);
