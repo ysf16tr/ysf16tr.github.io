@@ -1,539 +1,363 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yusuf Eden</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet" font-display="swap">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Icon Kütüphanesi -->
+    <script src="https://unpkg.com/lucide-react@0.395.0/dist/lucide-react.js"></script>
+
     <style>
-        :root {
-            --gradient-size: 750px;
-            --gradient-speed: 50s;
-            --gradient-easing: cubic-bezier(0.8, 0.2, 0.2, 0.8);
-            --primary-color: #00b0ff;
-            --text-color: #f0f0f0;
-            --bg-color-dark: #1a1a1a;
-            --bg-color-medium: #282828;
-            --bg-color-light: #3a3a3a;
-        }
-
-        @media (min-width: 720px) {
-             :root {
-                --gradient-size: 500px;
-            }
-        }
-
-        html, body {
+        /* Temel stil ve font ayarları */
+        body {
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color-dark);
-            color: var(--text-color);
-            line-height: 1.8;
-            overflow: hidden;
-            height: 100%;
-            position: relative;
-            text-rendering: optimizeLegibility;
+            background-color: #0a0a0a;
+            color: #e2e8f0;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            overflow-y: hidden; /* JavaScript kontrolü için kaydırma çubuğunu gizler */
         }
-
-        body {
-             &::-webkit-scrollbar {
-                display: none;
-            }
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        section {
-            padding: 100px 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-             z-index: 1;
-        }
-
-        section:nth-child(odd) {
-            background-color: rgba(40, 40, 40, 0.7);
-        }
-         section:nth-child(even) {
-            background-color: rgba(26, 26, 26, 0.7);
-        }
-
-        section video {
+        
+        /* Video arka planları için ortak stil */
+        .video-bg {
             position: absolute;
-            top: 0;
-            left: 0;
+            top: 50%;
+            left: 50%;
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transform: translate(-50%, -50%);
             z-index: -1;
+            filter: brightness(0.4);
         }
 
-        section h2 {
-            font-size: 3em;
-            margin-bottom: 20px;
-            color: var(--primary-color);
+        /* Scroll-reveal animasyonları için başlangıç durumu */
+        .reveal {
             opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-            text-shadow: 0 0 8px rgba(0, 176, 255, 0.6);
-            font-weight: 800;
-            letter-spacing: 1.5px;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-
-        section p {
-            font-size: 1.1em;
-            max-width: 800px;
-            margin: 0 auto 25px;
-            opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-            transition-delay: 0.2s;
-            color: #d0d0d0;
-            text-shadow: 0 0 3px rgba(240, 240, 240, 0.2);
-        }
-
-        .fade-in {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-        }
-
-        #home {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #home .profile-image {
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            object-fit: cover;
-            box-shadow: 0 0 80px rgb(94 129 128);
-            margin-bottom: 20px;
-            border: 3px solid #4c5715;
-            opacity: 0;
-            transform: scale(0.8);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-        }
-
-        #home h1 {
-            font-size: 4.5em;
-            margin-bottom: 10px;
-            color: var(--text-color);
-            opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-            font-weight: 900;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgb(140 220 255);
-        }
-
-        #home .subtitle {
-            font-size: 1.5em;
-            color: #b0b0b0;
-            opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
-            transition-delay: 0.2s;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-shadow: 0 0 3px rgba(176, 176, 176, 0.2);
-        }
-
-        #about, #skills, #projects, #interests, #contact {
-        }
-
-        #skills .skill-list {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        #skills .skill-item {
-            background-color: var(--bg-color-light);
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-size: 1em;
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-            font-weight: 600;
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
-            box-shadow: 0 0 6px rgba(0, 176, 255, 0.4);
-        }
-
-        #projects .project-list {
-            text-align: left;
-            max-width: 800px;
-            margin: 30px auto 0;
-        }
-
-        #projects .project-item {
-            background-color: var(--bg-color-medium);
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
-            border-left: 5px solid var(--primary-color);
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
-        }
-
-        #projects .project-item h3 {
-            color: var(--primary-color);
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 1.3em;
-            font-weight: 700;
-        }
-
-         #projects .project-item p {
-            font-size: 1em;
-            margin-bottom: 0;
+        
+        .reveal.active {
             opacity: 1;
-             transform: translateY(0);
-             transition: none;
-             color: #d0d0d0;
+            transform: translateY(0);
         }
 
-        #contact a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-size: 1.2em;
-            margin: 0 15px;
-            transition: color 0.3s ease, transform 0.3s ease;
-            display: inline-block;
+        /* Navigasyon barı aktif link stili */
+        .nav-link.active {
+            color: #38bdf8; /* sky-400 */
+            font-weight: 600;
         }
-
-        #contact a:hover {
-            color: #0077cc;
-            transform: translateY(-3px);
-        }
-
-        @media (max-width: 768px) {
-            section {
-                padding: 60px 0;
-            }
-
-            section h2 {
-                font-size: 2.2em;
-                margin-bottom: 15px;
-            }
-
-            section p {
-                font-size: 0.9em;
-                margin-bottom: 20px;
-            }
-
-            #home h1 {
-                font-size: 3em;
-            }
-
-            #home .subtitle {
-                font-size: 1.1em;
-            }
-
-            #home .profile-image {
-                width: 120px;
-                height: 120px;
-                margin-bottom: 15px;
-            }
-
-            #skills .skill-list {
-                gap: 10px;
-                margin-top: 20px;
-            }
-
-             #skills .skill-item {
-                padding: 8px 15px;
-                font-size: 0.9em;
-             }
-
-             #projects .project-item {
-                 padding: 15px;
-                 margin-bottom: 15px;
-             }
-
-             #projects .project-item h3 {
-                 font-size: 1.1em;
-             }
-
-             #contact a {
-                 font-size: 1em;
-                 margin: 0 10px;
-             }
+        
+        /* Glassmorphism efekti için arka plan */
+        .glass-effect {
+            background-color: rgba(10, 10, 10, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
     </style>
 </head>
 <body>
 
-    <section id="home">
-        <video autoplay loop muted playsinline preload="auto">
-            <source src="src/video1.mp4" type="video/mp4">
-            Tarayıcınız video etiketini desteklemiyor.
-        </video>
-        <div class="container">
-            <img src="src/pics.jpg"
-                 alt="Profil Resmi"
-                 class="profile-image"
-                 loading="lazy">
-            <h1>Yusuf Eden</h1>
-            <p class="subtitle">Fırtınayı şekillendiren güç, Esinti ile başlar!</p>
+    <!-- Header / Navigasyon -->
+    <header id="header" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#home" class="text-xl font-bold tracking-wider text-sky-400">YE</a>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#about" class="nav-link text-slate-300 hover:text-sky-400 transition-colors duration-300">Hakkımda</a>
+                <a href="#skills" class="nav-link text-slate-300 hover:text-sky-400 transition-colors duration-300">Yetkinlikler</a>
+                <a href="#projects" class="nav-link text-slate-300 hover:text-sky-400 transition-colors duration-300">Projeler</a>
+                <a href="#interests" class="nav-link text-slate-300 hover:text-sky-400 transition-colors duration-300">Araştırma</a>
+                <a href="#contact" class="nav-link text-slate-300 hover:text-sky-400 transition-colors duration-300">İletişim</a>
+            </nav>
+            <button id="mobile-menu-button" class="md:hidden text-slate-300">
+                <svg id="menu-open-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                <svg id="menu-close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <!-- Mobil Menü -->
+        <div id="mobile-menu" class="hidden md:hidden glass-effect">
+            <a href="#about" class="block py-3 px-6 text-center text-slate-300 hover:bg-slate-800 transition-colors duration-300">Hakkımda</a>
+            <a href="#skills" class="block py-3 px-6 text-center text-slate-300 hover:bg-slate-800 transition-colors duration-300">Yetkinlikler</a>
+            <a href="#projects" class="block py-3 px-6 text-center text-slate-300 hover:bg-slate-800 transition-colors duration-300">Projeler</a>
+            <a href="#interests" class="block py-3 px-6 text-center text-slate-300 hover:bg-slate-800 transition-colors duration-300">Araştırma</a>
+            <a href="#contact" class="block py-3 px-6 text-center text-slate-300 hover:bg-slate-800 transition-colors duration-300">İletişim</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Home Bölümü -->
+        <section id="home" class="section h-screen flex flex-col items-center justify-center text-center p-6 relative overflow-hidden">
+            <video autoplay loop muted playsinline preload="auto" class="video-bg">
+                <source src="https://ysf16tr.github.io/src/video1.mp4" type="video/mp4">
+            </video>
+            <div class="z-10">
+                <img src="https://raw.githubusercontent.com/ysf16tr/ysf16tr.github.io/main/src/pics.jpg" alt="Profil Resmi" class="reveal w-40 h-40 md:w-48 md:h-48 mx-auto rounded-full object-cover border-4 border-sky-500/50 shadow-2xl shadow-sky-500/20 mb-6">
+                <h1 class="reveal text-4xl md:text-6xl font-extrabold text-white tracking-tight" style="transition-delay: 100ms;">Yusuf Eden</h1>
+                <p class="reveal text-lg md:text-xl text-slate-400 mt-4 max-w-2xl mx-auto" style="transition-delay: 200ms;">Fırtınayı şekillendiren güç, Esinti ile başlar!</p>
             </div>
-    </section>
+            <a href="#about" class="absolute bottom-10 z-10 animate-bounce">
+                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+            </a>
+        </section>
 
-    <section id="about">
-         <video autoplay loop muted playsinline preload="auto">
-            <source src="src/video2.mp4" type="video/mp4">
-            Tarayıcınız video etiketini desteklemiyor.
-        </video>
-        <div class="container">
-            <h2>Ben Kimim?</h2>
-            <p>
-                Ben Yusuf Eden.<br>
-Benim varoluşum, hesaplı düşünce ve sarsılmaz iradenin eseridir.<br>
-Strateji, zihnimde keskinleşir; diplomasi, dilimde şekillenir.<br>
-Bilgiyle beslenir, güçle yükselir, durmaksızın evrilirim.<br>
-Bu karşılaşmanın ve geleceğinin rotası, benim bu temel taşlarım tarafından çizilecektir.
-            </p>
-             <p>
-                Her yeni zorluk, aşılması gereken bir engel, öğrenilmesi gereken yeni bir derstir. Sınırları zorlamak, kendimi aşmak ve daima en üst düzeyde olmak, benim doğamdır.
-             </p>
-        </div>
-    </section>
-
-    <section id="skills">
-         <video autoplay loop muted playsinline preload="auto">
-            <source src="src/video3.mp4" type="video/mp4">
-            Tarayıcınız video etiketini desteklemiyor.
-        </video>
-        <div class="container">
-            <h2>Yetkinlik Alanları:</h2>
-            <div class="skill-list">
-                <div class="skill-item">Dijital Alan Hakimiyeti (Genel Yazılım Dilleri)</div>
-                <div class="skill-item">Sistem Mimarisi ve Derin Yapılar</div>
-                <div class="skill-item">Ağ Güvenliği ve Savunma Stratejileri</div>
-                <div class="skill-item">Stratejik Planlama ve Uygulama</div>
-                <div class="skill-item">Analitik İstihbarat Toplama ve Değerlendirme</div>
-                <div class="skill-item">Fiziksel Disiplin ve Dayanıklılık</div>
-            </div>
-        </div>
-    </section>
-
-     <section id="projects">
-          <video autoplay loop muted playsinline preload="auto">
-            <source src="src/video4.mp4" type="video/mp4">
-            Tarayıcınız video etiketini desteklemiyor.
-        </video>
-        <div class="container">
-            <h2>Proje ve Araştırmalar</h2>
-            <p>Mevcut çalışmalar ve geleceğe yönelik araştırmalar:</p>
-            <div class="project-list">
-                <div class="project-item">
-                    <h3>Zeka ve Strateji Simülasyonları</h3>
-                    <p>Klasik zeka ve strateji simülasyonlarınu derinlemesine analiz ederek ve yeniden tasarlayarak zihinsel kapasitemi geliştiriyorum.</p>
-                </div>
-                 <div class="project-item">
-                    <h3>Apex Fusion: Kişisel Disiplin Projesi</h3>
-                    <p>Günlük rutinlerimi ve alışkanlıklarımı optimize etmek için tasarlanmış, sürekli gelişim odaklı kişisel bir sistem.</p>
-                </div>
-                 <div class="project-item">
-                    <h3>Gelecek Sahası Hazırlıkları</h3>
-                    <p>Siber güvenlik alanında savunma ve saldırı mekanizmaları ile gerçek dünya istihbarat ve strateji projeleri üzerinde çalışmayı planlıyorum.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section id="interests">
-         <video autoplay loop muted playsinline preload="auto">
-            <source src="src/video5.mp4" type="video/mp4">
-            Tarayıcınız video etiketini desteklemiyor.
-        </video>
-        <div class="container">
-            <h2>Araştırma Alanları: Zihinsel Keşifler</h2>
-            <p>Beni besleyen ve stratejik düşüncemi keskinleştiren ilgi alanlarım:</p>
-             <p>
-                Siber güvenliğin karmaşık dünyası, strateji teorilerinin derinlikleri, tarihsel ve modern askeri taktikler, insan psikolojisinin analizi, finansal sistemlerin işleyişi ve bedensel sınırları zorlayan disiplinler, keşif alanlarımdır.
-             </p>
-        </div>
-    </section>
-
-    <section id="contact">
-        <div class="container">
-            <h2>İletişim Kanalları</h2>
-            <p>Benimle bağlantılar kurmak için kullanılabilecek yollar:</p>
-            <p>
-                <a href="mailto:ysf316tr@gmail.com">Güvenli İletişim Hattı (E-posta)</a>
-                <a href="https://github.com/ysf16tr">Kod Arşivi (GitHub)</a>
+        <!-- About Bölümü -->
+        <section id="about" class="section min-h-screen py-20 md:py-32 px-6 flex flex-col items-center justify-center relative overflow-hidden">
+             <video autoplay loop muted playsinline preload="auto" class="video-bg">
+                <source src="https://ysf16tr.github.io/src/video2.mp4" type="video/mp4">
+            </video>
+            <div class="container mx-auto text-center z-10">
+                <h2 class="reveal text-3xl md:text-4xl font-bold text-sky-400 mb-6">Ben Kimim?</h2>
+                <p class="reveal text-slate-300 max-w-3xl mx-auto text-lg md:text-xl leading-relaxed" style="transition-delay: 100ms;">
+                    Benim varoluşum, hesaplı düşünce ve sarsılmaz iradenin eseridir. Strateji zihnimde keskinleşir, diplomasi dilimde şekillenir. Bilgiyle beslenir, güçle yükselir, durmaksızın evrilirim. Her yeni zorluk, aşılması gereken bir engel ve öğrenilmesi gereken yeni bir derstir.
                 </p>
-        </div>
-    </section>
+            </div>
+        </section>
 
+        <!-- Skills Bölümü -->
+        <section id="skills" class="section min-h-screen py-20 md:py-32 px-6 flex flex-col items-center justify-center relative overflow-hidden">
+             <video autoplay loop muted playsinline preload="auto" class="video-bg">
+                <source src="https://ysf16tr.github.io/src/video3.mp4" type="video/mp4">
+            </video>
+            <div class="container mx-auto text-center z-10">
+                <h2 class="reveal text-3xl md:text-4xl font-bold text-sky-400 mb-12">Yetkinlik Alanları</h2>
+                <div class="reveal grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    <!-- Skill Kartları -->
+                    <div class="glass-effect p-6 rounded-lg border border-slate-700/50 transition-all duration-300 hover:border-sky-500 hover:-translate-y-2">
+                        <h3 class="text-xl font-semibold text-white mb-2">Dijital Alan Hakimiyeti</h3>
+                        <p class="text-slate-400">Genel yazılım dilleri ve paradigmaları üzerinde derinlemesine bilgi ve uygulama becerisi.</p>
+                    </div>
+                    <div class="glass-effect p-6 rounded-lg border border-slate-700/50 transition-all duration-300 hover:border-sky-500 hover:-translate-y-2">
+                        <h3 class="text-xl font-semibold text-white mb-2">Sistem Mimarisi</h3>
+                        <p class="text-slate-400">Karmaşık sistemlerin tasarımı, analizi ve optimizasyonu üzerine uzmanlık.</p>
+                    </div>
+                    <div class="glass-effect p-6 rounded-lg border border-slate-700/50 transition-all duration-300 hover:border-sky-500 hover:-translate-y-2">
+                        <h3 class="text-xl font-semibold text-white mb-2">Ağ Güvenliği</h3>
+                        <p class="text-slate-400">Ağ altyapılarını korumak için proaktif ve reaktif savunma stratejileri geliştirme.</p>
+                    </div>
+                    <div class="glass-effect p-6 rounded-lg border border-slate-700/50 transition-all duration-300 hover:border-sky-500 hover:-translate-y-2">
+                        <h3 class="text-xl font-semibold text-white mb-2">Stratejik Planlama</h3>
+                        <p class="text-slate-400">Uzun vadeli hedeflere ulaşmak için etkili yol haritaları oluşturma ve uygulama.</p>
+                    </div>
+                     <div class="glass-effect p-6 rounded-lg border border-slate-700/50 transition-all duration-300 hover:border-sky-500 hover:-translate-y-2">
+                        <h3 class="text-xl font-semibold text-white mb-2">Analitik İstihbarat</h3>
+                        <p class="text-slate-400">Veri toplama, analiz etme ve karar alma süreçlerini destekleyen eyleme geçirilebilir içgörüler üretme.</p>
+                    </div>
+                     <div class="glass-effect p-6 rounded-lg border border-slate-700/50 transition-all duration-300 hover:border-sky-500 hover:-translate-y-2">
+                        <h3 class="text-xl font-semibold text-white mb-2">Fiziksel Disiplin</h3>
+                        <p class="text-slate-400">Zihinsel ve bedensel dayanıklılığı en üst seviyede tutarak zorlu koşullara adaptasyon.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Projects Bölümü -->
+        <section id="projects" class="section min-h-screen py-20 md:py-32 px-6 flex flex-col items-center justify-center relative overflow-hidden">
+             <video autoplay loop muted playsinline preload="auto" class="video-bg">
+                <source src="https://ysf16tr.github.io/src/video4.mp4" type="video/mp4">
+            </video>
+            <div class="container mx-auto text-center z-10">
+                <h2 class="reveal text-3xl md:text-4xl font-bold text-sky-400 mb-6">Proje ve Araştırmalar</h2>
+                <p class="reveal text-slate-300 max-w-3xl mx-auto text-lg mb-12">Mevcut çalışmalar ve geleceğe yönelik araştırmalar.</p>
+                <div class="reveal max-w-3xl mx-auto space-y-8">
+                    <!-- Proje Kartları -->
+                    <div class="glass-effect p-6 rounded-lg border border-slate-700/50 text-left">
+                        <h3 class="text-xl font-semibold text-sky-300 mb-2">Zeka ve Strateji Simülasyonları</h3>
+                        <p class="text-slate-400">Klasik zeka ve strateji simülasyonlarını derinlemesine analiz ederek ve yeniden tasarlayarak zihinsel kapasitemi geliştiriyorum.</p>
+                    </div>
+                    <div class="glass-effect p-6 rounded-lg border border-slate-700/50 text-left">
+                        <h3 class="text-xl font-semibold text-sky-300 mb-2">Apex Fusion: Kişisel Disiplin Projesi</h3>
+                        <p class="text-slate-400">Günlük rutinlerimi ve alışkanlıklarımı optimize etmek için tasarlanmış, sürekli gelişim odaklı kişisel bir sistem.</p>
+                    </div>
+                    <div class="glass-effect p-6 rounded-lg border border-slate-700/50 text-left">
+                        <h3 class="text-xl font-semibold text-sky-300 mb-2">Gelecek Sahası Hazırlıkları</h3>
+                        <p class="text-slate-400">Siber güvenlik alanında savunma ve saldırı mekanizmaları ile gerçek dünya istihbarat ve strateji projeleri üzerinde çalışmayı planlıyorum.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interests Bölümü -->
+        <section id="interests" class="section min-h-screen py-20 md:py-32 px-6 flex flex-col items-center justify-center relative overflow-hidden">
+             <video autoplay loop muted playsinline preload="auto" class="video-bg">
+                <source src="https://ysf16tr.github.io/src/video5.mp4" type="video/mp4">
+            </video>
+            <div class="container mx-auto text-center z-10">
+                <h2 class="reveal text-3xl md:text-4xl font-bold text-sky-400 mb-6">Araştırma Alanları: Zihinsel Keşifler</h2>
+                <p class="reveal text-slate-300 max-w-3xl mx-auto text-lg md:text-xl leading-relaxed" style="transition-delay: 100ms;">
+                    Siber güvenliğin karmaşık dünyası, strateji teorilerinin derinlikleri, tarihsel ve modern askeri taktikler, insan psikolojisinin analizi, finansal sistemlerin işleyişi ve bedensel sınırları zorlayan disiplinler, keşif alanlarımdır.
+                </p>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Footer / İletişim -->
+    <footer id="contact" class="section py-20 px-6 text-center bg-black/50">
+        <div class="container mx-auto">
+            <h2 class="reveal text-3xl md:text-4xl font-bold text-sky-400 mb-6">İletişim Kanalları</h2>
+            <p class="reveal text-slate-300 max-w-2xl mx-auto text-lg mb-8">Benimle bağlantılar kurmak için kullanılabilecek yollar:</p>
+            <div class="reveal flex justify-center items-center space-x-8">
+                 <a href="mailto:ysf316tr@gmail.com" class="text-slate-300 hover:text-sky-400 transition-all duration-300 flex flex-col items-center space-y-2">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <span class="text-sm">E-posta</span>
+                </a>
+                <a href="https://github.com/ysf16tr" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-sky-400 transition-all duration-300 flex flex-col items-center space-y-2">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"></path></svg>
+                    <span class="text-sm">GitHub</span>
+                </a>
+            </div>
+             <p class="text-slate-500 mt-16 text-sm">&copy; 2024 Yusuf Eden. Tüm hakları saklıdır.</p>
+        </div>
+    </footer>
+    
     <audio id="background-music" loop preload="auto">
-        <source src="src/audio.mp3" type="audio/mpeg">
-        Tarayıcınız ses etiketini desteklemiyor.
+        <source src="https://ysf16tr.github.io/src/audio.mp3" type="audio/mpeg">
     </audio>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-             document.querySelector('#home h1').classList.add('fade-in');
-             document.querySelector('#home .subtitle').classList.add('fade-in');
-             document.querySelector('#home .profile-image').classList.add('fade-in');
+            const header = document.getElementById('header');
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuOpenIcon = document.getElementById('menu-open-icon');
+            const menuCloseIcon = document.getElementById('menu-close-icon');
+            const audioElement = document.getElementById('background-music');
+            
+            // Mobil menü açma/kapama
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                menuOpenIcon.classList.toggle('hidden');
+                menuCloseIcon.classList.toggle('hidden');
+            });
+            
+            // Bölüm referanslarını ve aktif bölüm dizinini tut
+            const sections = Array.from(document.querySelectorAll('.section'));
+            let currentSectionIndex = 0;
+            let isScrolling = false;
 
-             const audioElement = document.getElementById('background-music');
-             let musicStarted = false;
+            // Navigasyon linkleri için kaydırma
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
 
-             function startMusic() {
-                 if (!musicStarted) {
-                     audioElement.play().then(() => {
-                         musicStarted = true;
-                         console.log("Müzik başladı.");
-                         window.removeEventListener('click', startMusic);
-                         window.removeEventListener('wheel', startMusic);
-                         window.removeEventListener('touchstart', startMusic);
-                     }).catch(error => {
-                         console.log("Müzik çalma hatası (kullanıcı etkileşimi gerekiyor):", error);
-                     });
-                 }
-             }
+                    if (targetElement) {
+                        const targetIndex = sections.indexOf(targetElement);
+                        if (targetIndex !== -1 && targetIndex !== currentSectionIndex) {
+                             scrollToSection(targetIndex);
+                             // Mobil menüyü kapat
+                            if (!mobileMenu.classList.contains('hidden')) {
+                                 mobileMenu.classList.add('hidden');
+                                 menuOpenIcon.classList.remove('hidden');
+                                 menuCloseIcon.classList.add('hidden');
+                            }
+                        }
+                    }
+                });
+            });
 
-             window.addEventListener('click', startMusic);
-             window.addEventListener('wheel', startMusic);
-             window.addEventListener('touchstart', startMusic);
+            // Akıcı kaydırma animasyonu
+            function scrollToSection(index) {
+                if (isScrolling || index < 0 || index >= sections.length) {
+                    return;
+                }
+                
+                isScrolling = true;
+                currentSectionIndex = index;
+                const targetPosition = sections[index].offsetTop;
 
-        });
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
 
-        const sections = document.querySelectorAll('section');
+                // Animasyon bittiğinde isScrolling'i sıfırla
+                setTimeout(() => {
+                    isScrolling = false;
+                    updateNavLinks(index);
+                }, 800); // Kaydırma animasyon süresiyle eşleşmeli
+            }
 
-        const observer = new IntersectionObserver(entries => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.querySelectorAll('h2, p, .profile-image, .subtitle, .skill-item, .project-item').forEach(element => {
-                        element.classList.add('fade-in');
-                    });
-                } else {
-                     entry.target.querySelectorAll('h2, p, .profile-image, .subtitle, .skill-item, .project-item').forEach(element => {
-                        element.classList.remove('fade-in');
-                    });
+            // Fare tekerleği ve klavye ile kaydırma olayları
+            window.addEventListener('wheel', (e) => {
+                if (isScrolling) return;
+
+                if (e.deltaY > 0) {
+                    scrollToSection(currentSectionIndex + 1);
+                } else if (e.deltaY < 0) {
+                    scrollToSection(currentSectionIndex - 1);
                 }
             });
-        }, {
-            threshold: 0.1
-        });
 
-        sections.forEach(section => {
-            observer.observe(section);
-        });
+            window.addEventListener('keydown', (e) => {
+                if (isScrolling) return;
 
-        let currentSectionIndex = 0;
-        let isScrolling = false;
-        const scrollDuration = 1000;
-        let touchStartY = 0; // Dokunma başlangıç Y koordinatı
-        let touchEndY = 0; // Dokunma bitiş Y koordinatı
-        const swipeThreshold = 50; // Kaydırma olarak algılanması için minimum piksel mesafesi
-
-        // Fare tekerleği olayını dinle
-        window.addEventListener('wheel', (event) => {
-            if (isScrolling || sections.length <= 1) {
-                return;
-            }
-
-            event.preventDefault();
-
-            const direction = event.deltaY > 0 ? 1 : -1; // 1 aşağı, -1 yukarı
-
-            scrollToSection(direction);
-        }, { passive: false });
-
-        // Dokunmatik başlangıç olayını dinle
-        window.addEventListener('touchstart', (event) => {
-            touchStartY = event.touches[0].clientY; // İlk parmağın Y koordinatını kaydet
-        }, { passive: false }); // preventDefault kullanabilmek için passive: false
-
-        // Dokunmatik hareket olayını dinle (isteğe bağlı, pürüzsüz kaydırma için kullanılabilir)
-        window.addEventListener('touchmove', (event) => {
-             // Dokunmatik kaydırma sırasında varsayılan davranışı engelle
-             // Bu, sayfanın kendiliğinden kaymasını önler.
-             event.preventDefault();
-        }, { passive: false });
-
-        // Dokunmatik bitiş olayını dinle
-        window.addEventListener('touchend', (event) => {
-            touchEndY = event.changedTouches[0].clientY; // Parmağın ayrıldığı Y koordinatını kaydet
-
-            // Dikey kaydırma mesafesini hesapla
-            const deltaY = touchEndY - touchStartY;
-
-            // Eğer yeterli dikey hareket varsa ve kaydırma devam etmiyorsa
-            if (Math.abs(deltaY) > swipeThreshold && !isScrolling) {
-                const direction = deltaY < 0 ? 1 : -1; // Yukarı kaydırma (deltaY negatif) aşağı gitmeli (direction 1), aşağı kaydırma (deltaY pozitif) yukarı gitmeli (direction -1)
-                scrollToSection(direction);
-            }
-        });
-
-        // Kaydırma işlemini gerçekleştiren fonksiyon
-        function scrollToSection(direction) {
-             let nextSectionIndex = currentSectionIndex + direction;
-
-             if (nextSectionIndex < 0) {
-                 nextSectionIndex = 0;
-             } else if (nextSectionIndex >= sections.length) {
-                 nextSectionIndex = sections.length - 1;
-             }
-
-             if (nextSectionIndex !== currentSectionIndex) {
-                 isScrolling = true;
-
-                 sections[nextSectionIndex].scrollIntoView({ behavior: 'smooth' });
-
-                 currentSectionIndex = nextSectionIndex;
-
-                 setTimeout(() => {
-                     isScrolling = false;
-                 }, scrollDuration);
-             }
-        }
-
-
-        window.addEventListener('load', () => {
-            const sectionInView = Array.from(sections).findIndex(section => {
-                 const rect = section.getBoundingClientRect();
-                 return rect.top >= 0 && rect.top < window.innerHeight * 0.5;
+                if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                    scrollToSection(currentSectionIndex + 1);
+                } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                    scrollToSection(currentSectionIndex - 1);
+                }
             });
-            if (sectionInView !== -1) {
-                currentSectionIndex = sectionInView;
-            }
-        });
 
-         window.addEventListener('resize', () => {
-             const sectionInView = Array.from(sections).findIndex(section => {
-                 const rect = section.getBoundingClientRect();
-                 return rect.top >= 0 && rect.top < window.innerHeight * 0.5;
-            });
-            if (sectionInView !== -1) {
-                currentSectionIndex = sectionInView;
+
+            // Navigasyon linklerini aktif etme ve mevcut bölümü takip etme
+            function updateNavLinks(index) {
+                const navLinks = document.querySelectorAll('.nav-link');
+                const currentId = sections[index].getAttribute('id');
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${currentId}`) {
+                        link.classList.add('active');
+                    }
+                });
             }
-         });
+
+            // Sayfa yüklendiğinde ve kaydırıldığında header'a arkaplan ekle
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.add('glass-effect', 'shadow-lg');
+                } else {
+                    header.classList.remove('glass-effect', 'shadow-lg');
+                }
+            });
+
+            // Müzik başlatma
+            let musicStarted = false;
+            function startMusic() {
+                if (!musicStarted) {
+                    audioElement.play().then(() => {
+                        musicStarted = true;
+                        window.removeEventListener('click', startMusic);
+                        window.removeEventListener('scroll', startMusic);
+                        window.removeEventListener('touchstart', startMusic);
+                    }).catch(error => {
+                        console.log("Müzik otomatik çalınamadı. Kullanıcı etkileşimi bekleniyor.");
+                    });
+                }
+            }
+            window.addEventListener('click', startMusic);
+            window.addEventListener('touchstart', startMusic);
+            
+            // Scroll animasyonları
+            const revealElements = document.querySelectorAll('.reveal');
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            revealElements.forEach(el => revealObserver.observe(el));
+        });
     </script>
-
 </body>
 </html>
